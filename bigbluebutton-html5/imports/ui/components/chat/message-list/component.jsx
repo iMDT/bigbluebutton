@@ -74,7 +74,6 @@ class MessageList extends Component {
     this.resizeRow = this.resizeRow.bind(this);
     this.systemMessagesResized = {};
 
-    this.scrollToBottom = this.scrollToBottom.bind(this);
     const modOnlyMessage = Storage.getItem('ModeratorOnlyMessage');
     this.state = {
       scrollArea: null,
