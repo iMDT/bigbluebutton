@@ -9,6 +9,14 @@ import {
 } from 'react-virtualized';
 import { styles } from './styles';
 import MessageListItemContainer from './message-list-item/container';
+import { getLoginTime } from '../chat-context/context';
+import Storage from '/imports/ui/services/storage/session';
+import ChatService from '../service';
+
+
+const CHAT_CONFIG = Meteor.settings.public.chat;
+const PUBLIC_CHAT_KEY = CHAT_CONFIG.public_id;
+const SYSTEM_CHAT_TYPE = CHAT_CONFIG.type_system;
 
 const propTypes = {
   messages: PropTypes.arrayOf(PropTypes.object).isRequired,
@@ -27,6 +35,11 @@ const propTypes = {
 const defaultProps = {
   scrollPosition: null,
   lastReadMessageTime: 0,
+  contextChat: {
+    messageGroups:{},
+    preJoinMessages:{},
+    posJoinMessages:{},
+  }
 };
 
 const intlMessages = defineMessages({
@@ -39,6 +52,13 @@ const intlMessages = defineMessages({
     description: 'aria-label used when chat log is empty',
   },
 });
+
+
+
+const sysMessagesIds = {
+  welcomeId: `${SYSTEM_CHAT_TYPE}-welcome-msg`,
+  moderatorId: `${SYSTEM_CHAT_TYPE}-moderator-msg`
+ };
 
 class MessageList extends Component {
   constructor(props) {
@@ -54,11 +74,23 @@ class MessageList extends Component {
     this.resizeRow = this.resizeRow.bind(this);
     this.systemMessagesResized = {};
 
+<<<<<<< HEAD
+=======
+    this.scrollToBottom = this.scrollToBottom.bind(this);
+    const modOnlyMessage = Storage.getItem('ModeratorOnlyMessage');
+>>>>>>> chat-new-structure
     this.state = {
       scrollArea: null,
       shouldScrollToPosition: false,
       scrollPosition: 0,
+<<<<<<< HEAD
       userScrolledBack: false,
+=======
+      lastMessage: {},
+      timeWindowIds: props.chatId === PUBLIC_CHAT_KEY 
+      ?  [sysMessagesIds.welcomeId,  props.currentUserIsModerator && modOnlyMessage && sysMessagesIds.moderatorId].filter(i=>i)
+      : [],
+>>>>>>> chat-new-structure
     };
 
     this.listRef = null;
@@ -68,6 +100,9 @@ class MessageList extends Component {
 
     this.scrollInterval = null;
   }
+
+  
+   
 
   componentDidMount() {
     const {
@@ -112,7 +147,18 @@ class MessageList extends Component {
       scrollPosition: prevScrollPosition,
       messages: prevMessages,
       chatId: prevChatId,
+      contextChat,
     } = prevProps;
+
+    const {
+      scrollArea,
+      shouldScrollToPosition,
+      scrollPosition: scrollPositionState,
+      shouldScrollToBottom,
+      lastMessage: stateLastMsg,
+      timeWindowIds,
+      currentUserIsModerator,
+    } = this.state;
 
     if (prevChatId !== chatId) {
       this.cache.clearAll();
@@ -136,6 +182,33 @@ class MessageList extends Component {
       // this.resizeRow(prevMessages.length - 1);
       // messages.forEach((i, idx) => this.resizeRow(idx));
     }
+    const chat = contextChat;
+    const lastTimeWindow = contextChat.lastTimewindow
+    console.log('contextChat', contextChat);
+    const lastMsg = chatId === PUBLIC_CHAT_KEY 
+      ? contextChat.preJoinMessages[lastTimeWindow] || contextChat.posJoinMessages[lastTimeWindow]
+      : contextChat.messageGroups[lastTimeWindow];
+
+
+    if (!_.isEqualWith(lastMsg, stateLastMsg) && lastMsg) {
+      console.log('timeWindowIds', this.state.timeWindowIds, lastMsg, stateLastMsg);
+      const modOnlyMessage = Storage.getItem('ModeratorOnlyMessage');
+      const welcomeId = sysMessagesIds.welcomeId;
+      const moderatorId = sysMessagesIds.moderatorId;
+      const systemMessagesIds = [
+        welcomeId,
+        currentUserIsModerator && modOnlyMessage && moderatorId,
+      ].filter((i)=> i);
+
+      this.setState({
+        lastMessage: { ...lastMsg },
+        timeWindowIds: chatId === PUBLIC_CHAT_KEY 
+        ? [...Object.keys(contextChat.preJoinMessages), ...systemMessagesIds, ...Object.keys(contextChat.posJoinMessages)]
+        : [...Object.keys(contextChat.messageGroups)],
+      });
+    }
+   this.resizeRow(timeWindowIds.length - 1);
+
   }
 
   componentWillUnmount() {
@@ -185,9 +258,46 @@ class MessageList extends Component {
       handleReadMessage,
       lastReadMessageTime,
       id,
+      contextChat,
+      chatId,
+      loginTime,
     } = this.props;
-    const { scrollArea } = this.state;
-    const message = messages[index];
+    
+    const { welcomeProp } = ChatService.getWelcomeProp();
+    const modOnlyMessage = Storage.getItem('ModeratorOnlyMessage');
+
+    const { scrollArea, timeWindowIds } = this.state;
+    const messageId = timeWindowIds[index];
+
+    const userMessage = chatId === PUBLIC_CHAT_KEY
+      ? contextChat.preJoinMessages[messageId] || contextChat.posJoinMessages[messageId]
+      : contextChat.messageGroups[messageId];
+
+
+    const systemMessages = {
+      [sysMessagesIds.welcomeId]:{
+        id: sysMessagesIds.welcomeId,
+        content: [{
+          id: sysMessagesIds.welcomeId,
+          text: welcomeProp.welcomeMsg,
+          time: loginTime,
+        }],
+        time: loginTime,
+        sender: null,
+      },
+      [sysMessagesIds.moderatorId]: {
+        id: sysMessagesIds.moderatorId,
+        content: [{
+          id: sysMessagesIds.moderatorId,
+          text: modOnlyMessage,
+          time: loginTime+1,
+        }],
+        time: loginTime+1,
+        sender: null,
+      }
+    };
+
+    const message = messageId.startsWith(SYSTEM_CHAT_TYPE) ? systemMessages[messageId] : userMessage;
 
     // it's to get an accurate size of the welcome message because it changes after initial render
 
@@ -253,10 +363,18 @@ class MessageList extends Component {
   render() {
     const {
       messages,
+      contextChat,
     } = this.props;
     const {
       scrollArea,
+<<<<<<< HEAD
       userScrolledBack,
+=======
+      shouldScrollToBottom,
+      shouldScrollToPosition,
+      scrollPosition,
+      timeWindowIds,
+>>>>>>> chat-new-structure
     } = this.state;
  
     return (
@@ -286,7 +404,7 @@ class MessageList extends Component {
               this.lastWidth = width;
               this.cache.clearAll();
             }
-
+            
             return (
               <List
                 ref={(ref) => {
@@ -302,7 +420,7 @@ class MessageList extends Component {
                 rowHeight={this.cache.rowHeight}
                 className={styles.messageList}
                 rowRenderer={this.rowRender}
-                rowCount={messages.length}
+                rowCount={timeWindowIds.length}
                 height={height}
                 width={width}
                 overscanRowCount={5}

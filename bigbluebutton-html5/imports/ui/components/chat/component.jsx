@@ -42,8 +42,8 @@ const Chat = (props) => {
     maxMessageLength,
     amIModerator,
     meetingIsBreakout,
+    contextChat,
   } = props;
-
   const HIDE_CHAT_AK = shortcuts.hidePrivateChat;
   const CLOSE_CHAT_AK = shortcuts.closePrivateChat;
 
@@ -99,11 +99,13 @@ const Chat = (props) => {
         handleScrollUpdate={actions.handleScrollUpdate}
         handleReadMessage={actions.handleReadMessage}
         {...{
+          contextChat,
           partnerIsLoggedOut,
           lastReadMessageTime,
           hasUnreadMessages,
           scrollPosition,
           messages,
+          currentUserIsModerator: amIModerator,
         }}
       />
       <MessageForm
