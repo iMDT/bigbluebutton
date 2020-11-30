@@ -74,23 +74,17 @@ class MessageList extends Component {
     this.resizeRow = this.resizeRow.bind(this);
     this.systemMessagesResized = {};
 
-<<<<<<< HEAD
-=======
     this.scrollToBottom = this.scrollToBottom.bind(this);
     const modOnlyMessage = Storage.getItem('ModeratorOnlyMessage');
->>>>>>> chat-new-structure
     this.state = {
       scrollArea: null,
       shouldScrollToPosition: false,
       scrollPosition: 0,
-<<<<<<< HEAD
       userScrolledBack: false,
-=======
       lastMessage: {},
       timeWindowIds: props.chatId === PUBLIC_CHAT_KEY 
       ?  [sysMessagesIds.welcomeId,  props.currentUserIsModerator && modOnlyMessage && sysMessagesIds.moderatorId].filter(i=>i)
       : [],
->>>>>>> chat-new-structure
     };
 
     this.listRef = null;
@@ -367,14 +361,8 @@ class MessageList extends Component {
     } = this.props;
     const {
       scrollArea,
-<<<<<<< HEAD
       userScrolledBack,
-=======
-      shouldScrollToBottom,
-      shouldScrollToPosition,
-      scrollPosition,
       timeWindowIds,
->>>>>>> chat-new-structure
     } = this.state;
  
     return (
