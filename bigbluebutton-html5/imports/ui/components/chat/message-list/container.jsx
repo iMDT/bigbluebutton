@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 import { withTracker } from 'meteor/react-meteor-data';
 import ChatList from './component';
-import { getLoginTime } from '../chat-context/context';
 import ChatService from '../service';
 
 class ChatContainer extends PureComponent {
@@ -22,6 +21,6 @@ export default withTracker(({ chatId }) => {
     lastReadMessageTime,
     handleScrollUpdate: ChatService.updateScrollPosition,
     handleReadMessage: ChatService.updateUnreadMessage,
-    loginTime: getLoginTime(),
+    
   };
 })(ChatContainer);

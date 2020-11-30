@@ -9,7 +9,6 @@ import {
 } from 'react-virtualized';
 import { styles } from './styles';
 import MessageListItemContainer from './message-list-item/container';
-import { getLoginTime } from '../chat-context/context';
 import Storage from '/imports/ui/services/storage/session';
 import ChatService from '../service';
 
@@ -81,9 +80,6 @@ class MessageList extends Component {
       scrollPosition: 0,
       userScrolledBack: false,
       lastMessage: {},
-      timeWindowIds: props.chatId === PUBLIC_CHAT_KEY 
-      ?  [sysMessagesIds.welcomeId,  props.currentUserIsModerator && modOnlyMessage && sysMessagesIds.moderatorId].filter(i=>i)
-      : [],
     };
 
     this.listRef = null;
@@ -121,10 +117,10 @@ class MessageList extends Component {
         });
       }
     }, 100);
-
+    
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps, prevState) {
     if (this.virualRef) {
       if (this.virualRef.style.direction !== document.documentElement.dir) {
         this.virualRef.style.direction = document.documentElement.dir;
@@ -135,12 +131,15 @@ class MessageList extends Component {
       scrollPosition,
       chatId,
       messages,
+      contextChat,
+      timeWindowsValues,
     } = this.props;
+
     const {
       scrollPosition: prevScrollPosition,
       messages: prevMessages,
       chatId: prevChatId,
-      contextChat,
+      timeWindowsValues: prevTimeWindowsValues,
     } = prevProps;
 
     const {
@@ -156,49 +155,49 @@ class MessageList extends Component {
     if (prevChatId !== chatId) {
       this.cache.clearAll();
       setTimeout(() => this.scrollTo(scrollPosition), 300);
-    } else if (prevMessages && messages) {
-      if (prevMessages.length > messages.length) {
-        // the chat has been cleared
-        this.cache.clearAll();
-      } else {
-        prevMessages.forEach((prevMessage, index) => {
-          const newMessage = messages[index];
-          if (newMessage.content.length > prevMessage.content.length
-              || newMessage.id !== prevMessage.id) {
-            this.resizeRow(index);
-          }
-        });
-      }
-    }
+    } 
+    // else if (prevTimeWindowIds && timeWindowIds) {
+    //   if (prevTimeWindowIds.length > timeWindowIds.length) {
+    //     // the chat has been cleared
+    //     this.cache.clearAll();
+    //   } else {
+    //     prevTimeWindowIds.forEach((prevMessageId, index) => {
+    //       const prevMessage = [prevMessageId];
+    //       const newMessage = chatId === PUBLIC_CHAT_KEY 
+    //       ? contextChat.preJoinMessages[prevMessageId] || contextChat.posJoinMessages[prevMessageId]
+    //       : contextChat.messageGroups[prevMessageId];
+
+    //       const oldMessage = chatId === PUBLIC_CHAT_KEY 
+    //       ? prevContextChat.preJoinMessages[prevMessageId] || prevContextChat.posJoinMessages[prevMessageId]
+    //       : prevContextChat.messageGroups[prevMessageId];
+
+    //       if (newMessage.content.length > oldMessage.content.length
+    //           || newMessage.id !== prevMessage.id) {
+    //         this.resizeRow(index);
+    //       }
+    //     });
+    //   }
+    // }
 
     if (prevMessages.length < messages.length) {
       // this.resizeRow(prevMessages.length - 1);
       // messages.forEach((i, idx) => this.resizeRow(idx));
     }
-    const chat = contextChat;
-    const lastTimeWindow = contextChat.lastTimewindow
-    const lastMsg = chatId === PUBLIC_CHAT_KEY 
-      ? contextChat.preJoinMessages[lastTimeWindow] || contextChat.posJoinMessages[lastTimeWindow]
-      : contextChat.messageGroups[lastTimeWindow];
+    // const chat = contextChat;
+    // const lastTimeWindow = contextChat.lastTimewindow
+    // const lastMsg = chatId === PUBLIC_CHAT_KEY 
+    //   ? contextChat.preJoinMessages[lastTimeWindow] || contextChat.posJoinMessages[lastTimeWindow]
+    //   : contextChat.messageGroups[lastTimeWindow];
 
+    const lastMsg = timeWindowsValues[timeWindowsValues.length - 1];
+    const prevLastMsg = prevTimeWindowsValues[prevTimeWindowsValues.length - 1];
 
-    if (!_.isEqualWith(lastMsg, stateLastMsg) && lastMsg) {
-      console.log('timeWindowIds', this.state.timeWindowIds, lastMsg, stateLastMsg);
-      const modOnlyMessage = Storage.getItem('ModeratorOnlyMessage');
-      const welcomeId = sysMessagesIds.welcomeId;
-      const moderatorId = sysMessagesIds.moderatorId;
-      const systemMessagesIds = [
-        welcomeId,
-        currentUserIsModerator && modOnlyMessage && moderatorId,
-      ].filter((i)=> i);
-
-      this.setState({
-        lastMessage: { ...lastMsg },
-        timeWindowIds: chatId === PUBLIC_CHAT_KEY 
-        ? [...Object.keys(contextChat.preJoinMessages), ...systemMessagesIds, ...Object.keys(contextChat.posJoinMessages)]
-        : [...Object.keys(contextChat.messageGroups)],
-      });
+    if (lastMsg?.content?.length > prevLastMsg?.content?.length
+      || lastMsg?.id !== stateLastMsg?.id) {
+      this.resizeRow(timeWindowsValues.length-1);
     }
+
+    
   }
 
   componentWillUnmount() {
@@ -250,44 +249,19 @@ class MessageList extends Component {
       id,
       contextChat,
       chatId,
-      loginTime,
+      timeWindowsValues,
     } = this.props;
     
-    const { welcomeProp } = ChatService.getWelcomeProp();
-    const modOnlyMessage = Storage.getItem('ModeratorOnlyMessage');
+    // 
+    // const modOnlyMessage = Storage.getItem('ModeratorOnlyMessage');
 
-    const { scrollArea, timeWindowIds } = this.state;
-    const messageId = timeWindowIds[index];
+    const { scrollArea, } = this.state;
+    const message = timeWindowsValues[index];
+    // const userMessage = chatId === PUBLIC_CHAT_KEY
+    //   ? contextChat.preJoinMessages[messageId] || contextChat.posJoinMessages[messageId]
+    //   : contextChat.messageGroups[messageId];
 
-    const userMessage = chatId === PUBLIC_CHAT_KEY
-      ? contextChat.preJoinMessages[messageId] || contextChat.posJoinMessages[messageId]
-      : contextChat.messageGroups[messageId];
-
-
-    const systemMessages = {
-      [sysMessagesIds.welcomeId]:{
-        id: sysMessagesIds.welcomeId,
-        content: [{
-          id: sysMessagesIds.welcomeId,
-          text: welcomeProp.welcomeMsg,
-          time: loginTime,
-        }],
-        time: loginTime,
-        sender: null,
-      },
-      [sysMessagesIds.moderatorId]: {
-        id: sysMessagesIds.moderatorId,
-        content: [{
-          id: sysMessagesIds.moderatorId,
-          text: modOnlyMessage,
-          time: loginTime+1,
-        }],
-        time: loginTime+1,
-        sender: null,
-      }
-    };
-
-    const message = messageId.startsWith(SYSTEM_CHAT_TYPE) ? systemMessages[messageId] : userMessage;
+    // const message = messageId.startsWith(SYSTEM_CHAT_TYPE) ? systemMessages[messageId] : userMessage;
 
     // it's to get an accurate size of the welcome message because it changes after initial render
 
@@ -308,6 +282,7 @@ class MessageList extends Component {
           style={style}
           key={key}
         >
+          <div>{index}</div>
           <MessageListItemContainer
             style={style}
             handleReadMessage={handleReadMessage}
@@ -354,13 +329,12 @@ class MessageList extends Component {
     const {
       messages,
       contextChat,
+      timeWindowsValues,
     } = this.props;
     const {
       scrollArea,
       userScrolledBack,
-      timeWindowIds,
     } = this.state;
- 
     return (
       [<div 
         onMouseDown={()=> {
@@ -369,7 +343,6 @@ class MessageList extends Component {
           });
         }}
         onWheel={(e) => {
-          console.log('caiu aqui');
           if (e.deltaY < 0) {
             this.setState({
               userScrolledBack: true,
@@ -404,12 +377,12 @@ class MessageList extends Component {
                 rowHeight={this.cache.rowHeight}
                 className={styles.messageList}
                 rowRenderer={this.rowRender}
-                rowCount={timeWindowIds.length}
+                rowCount={timeWindowsValues.length}
                 height={height}
                 width={width}
                 overscanRowCount={5}
                 deferredMeasurementCache={this.cache}
-                scrollToIndex={!userScrolledBack ? messages.length - 1 : undefined}
+                scrollToIndex={!userScrolledBack ? timeWindowsValues.length - 1 : undefined}
               />
             );
           }}

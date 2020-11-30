@@ -7,11 +7,9 @@ const Adapter = () => {
   const usingChatContext = useContext(ChatContext);
   const { dispatch } = usingChatContext;
   useEffect(() => {
-    console.log('adapter carregou\n\n\n\n');
     const chatCursor = GroupChatMsg.find({}, { sort: { timestamp: 1 } });
     chatCursor.observe({
       added: (obj) => {
-        console.log('testando som', obj);
         dispatch({
           type: ACTIONS.ADDED,
           value: {

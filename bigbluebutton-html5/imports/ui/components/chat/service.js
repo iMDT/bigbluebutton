@@ -96,7 +96,6 @@ const reduceGroupMessages = (previous, current) => {
 };
 
 const getChatMessages = (chatId) => {
-  console.log('alontra', PUBLIC_CHAT_ID, chatId, chatId === PUBLIC_CHAT_ID, Auth.meetingID);
   if (chatId === PUBLIC_CHAT_ID) {
     return GroupChatMsg.find({
       meetingId: Auth.meetingID,
@@ -116,10 +115,6 @@ const getChatMessages = (chatId) => {
     const {
       chatId: id,
     } = privateChat;
-    console.log('ratibum', GroupChatMsg.find({
-      meetingId: Auth.meetingID,
-      chatId: id,
-    }, { sort: ['timestamp'] }).fetch());
 
     return GroupChatMsg.find({
       meetingId: Auth.meetingID,

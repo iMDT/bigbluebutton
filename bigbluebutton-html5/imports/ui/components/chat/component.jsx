@@ -43,6 +43,7 @@ const Chat = (props) => {
     amIModerator,
     meetingIsBreakout,
     contextChat,
+    timeWindowsValues,
   } = props;
   const HIDE_CHAT_AK = shortcuts.hidePrivateChat;
   const CLOSE_CHAT_AK = shortcuts.closePrivateChat;
@@ -106,6 +107,7 @@ const Chat = (props) => {
           scrollPosition,
           messages,
           currentUserIsModerator: amIModerator,
+          timeWindowsValues,
         }}
       />
       <MessageForm

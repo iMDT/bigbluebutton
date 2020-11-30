@@ -32,12 +32,12 @@ export const ChatContext = createContext();
 
 const formatMsg = (msg, state) => {
   const timeWindow = generateTimeWindow(msg.timestamp);
-  const userId = msg.sender;
+  const userId = msg.sender.id;
   const keyName = userId + '-' + timeWindow;
 
   const msgBuilder = (msg, chat) => {
     const msgTimewindow = generateTimeWindow(msg.timestamp);
-    const key = msg.sender + '-' + msgTimewindow;
+    const key = msg.sender.id + '-' + msgTimewindow;
     const chatIndex = chat?.chatIndexes[key];
     const {
       _id,
@@ -105,7 +105,6 @@ const formatMsg = (msg, state) => {
     }
   }
 
-  console.log('state antes do return', state);
   return state;
 }
 
@@ -122,19 +121,15 @@ const reducer = (state, action) => {
     }
     case ACTIONS.ADDED: {
       const newState = formatMsg(action.value.msg, state);
-      console.log('newState', newState);
-      return newState;
+      return {...newState};
     }
     case ACTIONS.CHANGED: {
-      console.log(ACTIONS.CHANGED);
       return {
         ...state,
         ...action.value,
       };
     }
     case ACTIONS.REMOVED: {
-      console.log(ACTIONS.REMOVED);
-
       if (state[msg.chatId]){
         delete state[msg.chatId];
       }
