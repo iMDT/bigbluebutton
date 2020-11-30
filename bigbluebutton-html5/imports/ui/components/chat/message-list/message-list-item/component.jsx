@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import { FormattedTime, defineMessages, injectIntl } from 'react-intl';
 import _ from 'lodash';
@@ -45,7 +45,7 @@ const intlMessages = defineMessages({
   },
 });
 
-class MessageListItem extends Component {
+class MessageListItem extends PureComponent {
   shouldComponentUpdate(nextProps) {
     const {
       scrollArea,

@@ -21,6 +21,6 @@ export default withTracker(({ chatId }) => {
     lastReadMessageTime,
     handleScrollUpdate: ChatService.updateScrollPosition,
     handleReadMessage: ChatService.updateUnreadMessage,
-    
+
   };
 })(ChatContainer);

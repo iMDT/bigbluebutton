@@ -101,7 +101,6 @@ const ChatContainer = (props) => {
     timeWindowsValues = chatID === PUBLIC_CHAT_KEY
       ? [...Object.values(contextChat.preJoinMessages), ...systemMessagesIds.map((item)=> systemMessages[item]), ...Object.values(contextChat.posJoinMessages)]
       : [...Object.values(contextChat.messageGroups)];
-      console.log('timeWindowIds container', timeWindowsValues, chatID === PUBLIC_CHAT_KEY);
       setLastMsg({ ...lastMsg });
       setTimeWindows(timeWindowsValues);
     }
