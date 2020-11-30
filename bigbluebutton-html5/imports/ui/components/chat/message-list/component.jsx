@@ -177,7 +177,6 @@ class MessageList extends Component {
     }
     const chat = contextChat;
     const lastTimeWindow = contextChat.lastTimewindow
-    console.log('contextChat', contextChat);
     const lastMsg = chatId === PUBLIC_CHAT_KEY 
       ? contextChat.preJoinMessages[lastTimeWindow] || contextChat.posJoinMessages[lastTimeWindow]
       : contextChat.messageGroups[lastTimeWindow];
@@ -200,8 +199,6 @@ class MessageList extends Component {
         : [...Object.keys(contextChat.messageGroups)],
       });
     }
-   this.resizeRow(timeWindowIds.length - 1);
-
   }
 
   componentWillUnmount() {
