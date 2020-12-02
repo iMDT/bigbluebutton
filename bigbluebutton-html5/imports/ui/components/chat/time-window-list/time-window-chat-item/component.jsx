@@ -5,7 +5,7 @@ import _ from 'lodash';
 import Icon from '/imports/ui/components/icon/component';
 import UserAvatar from '/imports/ui/components/user-avatar/component';
 import cx from 'classnames';
-import Message from './message/component';
+import MessageChatItem from './message-chat-item/component';
 
 import { styles } from './styles';
 
@@ -45,46 +45,47 @@ const intlMessages = defineMessages({
   },
 });
 
-class MessageListItem extends PureComponent {
-  shouldComponentUpdate(nextProps) {
-    const {
-      scrollArea,
-      messages,
-      user,
-      messageId,
-    } = this.props;
+class TimeWindowChatItem extends PureComponent {
+  // shouldComponentUpdate(nextProps) {
+  //   const {
+  //     scrollArea,
+  //     messages,
+  //     user,
+  //     messageId,
+  //   } = this.props;
 
-    const {
-      scrollArea: nextScrollArea,
-      messages: nextMessages,
-      user: nextUser,
-      messageId: nextMessageId,
-    } = nextProps;
+  //   const {
+  //     scrollArea: nextScrollArea,
+  //     messages: nextMessages,
+  //     user: nextUser,
+  //     messageId: nextMessageId,
+  //   } = nextProps;
 
-    if (!scrollArea && nextScrollArea) return true;
+  //   if (!scrollArea && nextScrollArea) return true;
 
-    const hasNewMessage = messages.length !== nextMessages.length;
-    const hasIdChanged = messageId !== nextMessageId;
-    const hasUserChanged = user && nextUser
-      && (user.isModerator !== nextUser.isModerator || user.isOnline !== nextUser.isOnline);
+  //   const hasNewMessage = messages.length !== nextMessages.length;
+  //   const hasIdChanged = messageId !== nextMessageId;
+  //   const hasUserChanged = user && nextUser
+  //     && (user.isModerator !== nextUser.isModerator || user.isOnline !== nextUser.isOnline);
 
-    return hasNewMessage || hasIdChanged || hasUserChanged;
-  }
+  //   return hasNewMessage || hasIdChanged || hasUserChanged;
+  // }
 
   renderSystemMessage() {
     const {
       messages,
       chatAreaId,
       handleReadMessage,
+      messageKey
     } = this.props;
 
     return (
-      <div className={styles.item}>
+      <div className={styles.item} key={`time-window-chat-item-${messageKey}`}>
         <div className={styles.messages}>
           {messages.map(message => (
             message.text !== ''
               ? (
-                <Message
+                <MessageChatItem
                   className={(message.id ? styles.systemMessage : styles.systemMessageNoBorder)}
                   key={message.id ? message.id : _.uniqueId('id-')}
                   text={message.text}
@@ -109,6 +110,7 @@ class MessageListItem extends PureComponent {
       scrollArea,
       intl,
       messages,
+      messageKey,
     } = this.props;
 
     if (messages && messages[0].text.includes('bbb-published-poll-<br/>')) {
@@ -117,9 +119,9 @@ class MessageListItem extends PureComponent {
 
     const dateTime = new Date(time);
     const regEx = /<a[^>]+>/i;
-
+    console.log('TimeWindowChatItem::renderMessageItem', messageKey, messages);
     return (
-      <div className={styles.item} key={_.uniqueId('message-list-item-')}>
+      <div className={styles.item} key={`time-window-${messageKey}`}>
         <div className={styles.wrapper}>
           <div className={styles.avatarWrapper}>
             <UserAvatar
@@ -149,7 +151,7 @@ class MessageListItem extends PureComponent {
             </div>
             <div className={styles.messages} data-test="chatUserMessage">
               {messages.map(message => (
-                <Message
+                <MessageChatItem
                   className={(regEx.test(message.text) ? styles.hyperlink : styles.message)}
                   key={message.id}
                   text={message.text}
@@ -203,7 +205,7 @@ class MessageListItem extends PureComponent {
                 <FormattedTime value={dateTime} />
               </time>
             </div>
-            <Message
+            <MessageChatItem
               type="poll"
               className={cx(styles.message, styles.pollWrapper)}
               key={messages[0].id}
@@ -226,7 +228,7 @@ class MessageListItem extends PureComponent {
     const {
       user,
     } = this.props;
-
+    console.log('TimeWindowChatItem::render', {...this.props});
     if (!user) {
       return this.renderSystemMessage();
     }
@@ -239,7 +241,7 @@ class MessageListItem extends PureComponent {
   }
 }
 
-MessageListItem.propTypes = propTypes;
-MessageListItem.defaultProps = defaultProps;
+TimeWindowChatItem.propTypes = propTypes;
+TimeWindowChatItem.defaultProps = defaultProps;
 
-export default injectIntl(MessageListItem);
+export default injectIntl(TimeWindowChatItem);

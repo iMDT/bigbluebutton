@@ -42,7 +42,7 @@ const intlMessages = defineMessages({
   },
 });
 
-class MessageListItem extends PureComponent {
+class MessageChatItem extends PureComponent {
   constructor(props) {
     super(props);
 
@@ -57,7 +57,8 @@ class MessageListItem extends PureComponent {
     this.listenToUnreadMessages();
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps) {
+    console.log('MessageChatItem::componentDidUpdate', {...prevProps}, {...this.props});
     this.listenToUnreadMessages();
   }
 
@@ -67,7 +68,7 @@ class MessageListItem extends PureComponent {
     // if (!lastReadMessageTime > time) {
     //  return;
     // }
-
+    console.log('MessageChatItem::componentWillUnmount', this.props);
     this.removeScrollListeners();
   }
 
@@ -197,7 +198,7 @@ class MessageListItem extends PureComponent {
       type,
       className,
     } = this.props;
-
+    console.log('MessageChatItem::render', this.props);
     if (type === 'poll') return this.renderPollListItem();
 
     return (
@@ -211,7 +212,7 @@ class MessageListItem extends PureComponent {
   }
 }
 
-MessageListItem.propTypes = propTypes;
-MessageListItem.defaultProps = defaultProps;
+MessageChatItem.propTypes = propTypes;
+MessageChatItem.defaultProps = defaultProps;
 
-export default injectIntl(MessageListItem);
+export default injectIntl(MessageChatItem);

@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import { findDOMNode } from 'react-dom';
 import PropTypes from 'prop-types';
 import { defineMessages, injectIntl } from 'react-intl';
@@ -8,9 +8,8 @@ import {
   List, AutoSizer, CellMeasurer, CellMeasurerCache,
 } from 'react-virtualized';
 import { styles } from './styles';
-import MessageListItemContainer from './message-list-item/container';
-import Storage from '/imports/ui/services/storage/session';
-import ChatService from '../service';
+import TimeWindowChatItem from './time-window-chat-item/container';
+
 
 
 const CHAT_CONFIG = Meteor.settings.public.chat;
@@ -59,7 +58,7 @@ const sysMessagesIds = {
   moderatorId: `${SYSTEM_CHAT_TYPE}-moderator-msg`
  };
 
-class MessageList extends Component {
+class TimeWindowList extends PureComponent {
   constructor(props) {
     super(props);
     this.cache = new CellMeasurerCache({
@@ -73,7 +72,6 @@ class MessageList extends Component {
     this.resizeRow = this.resizeRow.bind(this);
     this.systemMessagesResized = {};
 
-    const modOnlyMessage = Storage.getItem('ModeratorOnlyMessage');
     this.state = {
       scrollArea: null,
       shouldScrollToPosition: false,
@@ -89,9 +87,6 @@ class MessageList extends Component {
 
     this.scrollInterval = null;
   }
-
-  
-   
 
   componentDidMount() {
     const {
@@ -120,7 +115,8 @@ class MessageList extends Component {
     
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps) {
+    console.log('TimeWindowList::componentDidUpdate', {...this.props}, {...prevProps});
     if (this.virualRef) {
       if (this.virualRef.style.direction !== document.documentElement.dir) {
         this.virualRef.style.direction = document.documentElement.dir;
@@ -130,64 +126,22 @@ class MessageList extends Component {
     const {
       scrollPosition,
       chatId,
-      messages,
-      contextChat,
       timeWindowsValues,
     } = this.props;
 
     const {
-      scrollPosition: prevScrollPosition,
-      messages: prevMessages,
       chatId: prevChatId,
       timeWindowsValues: prevTimeWindowsValues,
     } = prevProps;
 
     const {
-      scrollArea,
-      shouldScrollToPosition,
-      scrollPosition: scrollPositionState,
-      shouldScrollToBottom,
       lastMessage: stateLastMsg,
-      timeWindowIds,
-      currentUserIsModerator,
     } = this.state;
 
     if (prevChatId !== chatId) {
       this.cache.clearAll();
       setTimeout(() => this.scrollTo(scrollPosition), 300);
     } 
-    // else if (prevTimeWindowIds && timeWindowIds) {
-    //   if (prevTimeWindowIds.length > timeWindowIds.length) {
-    //     // the chat has been cleared
-    //     this.cache.clearAll();
-    //   } else {
-    //     prevTimeWindowIds.forEach((prevMessageId, index) => {
-    //       const prevMessage = [prevMessageId];
-    //       const newMessage = chatId === PUBLIC_CHAT_KEY 
-    //       ? contextChat.preJoinMessages[prevMessageId] || contextChat.posJoinMessages[prevMessageId]
-    //       : contextChat.messageGroups[prevMessageId];
-
-    //       const oldMessage = chatId === PUBLIC_CHAT_KEY 
-    //       ? prevContextChat.preJoinMessages[prevMessageId] || prevContextChat.posJoinMessages[prevMessageId]
-    //       : prevContextChat.messageGroups[prevMessageId];
-
-    //       if (newMessage.content.length > oldMessage.content.length
-    //           || newMessage.id !== prevMessage.id) {
-    //         this.resizeRow(index);
-    //       }
-    //     });
-    //   }
-    // }
-
-    if (prevMessages.length < messages.length) {
-      // this.resizeRow(prevMessages.length - 1);
-      // messages.forEach((i, idx) => this.resizeRow(idx));
-    }
-    // const chat = contextChat;
-    // const lastTimeWindow = contextChat.lastTimewindow
-    // const lastMsg = chatId === PUBLIC_CHAT_KEY 
-    //   ? contextChat.preJoinMessages[lastTimeWindow] || contextChat.posJoinMessages[lastTimeWindow]
-    //   : contextChat.messageGroups[lastTimeWindow];
 
     const lastMsg = timeWindowsValues[timeWindowsValues.length - 1];
     const prevLastMsg = prevTimeWindowsValues[prevTimeWindowsValues.length - 1];
@@ -243,28 +197,16 @@ class MessageList extends Component {
     key,
   }) {
     const {
-      messages,
       handleReadMessage,
       lastReadMessageTime,
       id,
-      contextChat,
-      chatId,
       timeWindowsValues,
     } = this.props;
     
-    // 
-    // const modOnlyMessage = Storage.getItem('ModeratorOnlyMessage');
-
     const { scrollArea, } = this.state;
     const message = timeWindowsValues[index];
-    // const userMessage = chatId === PUBLIC_CHAT_KEY
-    //   ? contextChat.preJoinMessages[messageId] || contextChat.posJoinMessages[messageId]
-    //   : contextChat.messageGroups[messageId];
-
-    // const message = messageId.startsWith(SYSTEM_CHAT_TYPE) ? systemMessages[messageId] : userMessage;
-
+  
     // it's to get an accurate size of the welcome message because it changes after initial render
-
     if (message.sender === null && !this.systemMessagesResized[index]) {
       setTimeout(() => this.resizeRow(index), 500);
       this.systemMessagesResized[index] = true;
@@ -280,10 +222,9 @@ class MessageList extends Component {
       >
         <span
           style={style}
-          key={key}
+          key={`span-${key}-${index}`}
         >
-          <div>{index}</div>
-          <MessageListItemContainer
+          <TimeWindowChatItem
             style={style}
             handleReadMessage={handleReadMessage}
             key={key}
@@ -302,7 +243,6 @@ class MessageList extends Component {
     const {
       intl,
       hasUnreadMessages,
-      scrollPosition,
     } = this.props;
     const { userScrolledBack } = this.state;
 
@@ -327,14 +267,14 @@ class MessageList extends Component {
 
   render() {
     const {
-      messages,
-      contextChat,
       timeWindowsValues,
     } = this.props;
     const {
       scrollArea,
       userScrolledBack,
     } = this.state;
+    console.log('TimeWindowList::render', {...this.props},  {...this.state});
+
     return (
       [<div 
         onMouseDown={()=> {
@@ -393,7 +333,7 @@ class MessageList extends Component {
   }
 }
 
-MessageList.propTypes = propTypes;
-MessageList.defaultProps = defaultProps;
+TimeWindowList.propTypes = propTypes;
+TimeWindowList.defaultProps = defaultProps;
 
-export default injectIntl(MessageList);
+export default injectIntl(TimeWindowList);

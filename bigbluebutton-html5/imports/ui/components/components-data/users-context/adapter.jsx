@@ -1,19 +1,19 @@
 import React, { useMemo, useContext, useEffect } from 'react';
-import { GroupChatMsg } from '/imports/api/group-chat-msg';
-import { ChatContext, ACTIONS } from './context';
-
+import Users from '/imports/api/users';
+import { UsersContext, ACTIONS } from './context';
 
 const Adapter = () => {
-  const usingChatContext = useContext(ChatContext);
-  const { dispatch } = usingChatContext;
+  const usingUsersContext = useContext(UsersContext);
+  const { dispatch } = usingUsersContext;
   useEffect(() => {
-    const chatCursor = GroupChatMsg.find({}, { sort: { timestamp: 1 } });
-    chatCursor.observe({
+    const usersCursor = Users.find({}, { sort: { timestamp: 1 } });
+    usersCursor.observe({
       added: (obj) => {
+        console.log("usersAdapter::observe::added", obj);
         dispatch({
           type: ACTIONS.ADDED,
           value: {
-            msg: obj,
+            user: obj,
           },
         });
       },
@@ -21,7 +21,7 @@ const Adapter = () => {
         dispatch({
           type: ACTIONS.CHANGED,
           value: {
-            msg: obj,
+            user: obj,
           },
         });
       },
@@ -29,7 +29,7 @@ const Adapter = () => {
         dispatch({
           type: ACTIONS.REMOVED,
           value: {
-            msg: obj,
+            user: obj,
           },
         });
       },

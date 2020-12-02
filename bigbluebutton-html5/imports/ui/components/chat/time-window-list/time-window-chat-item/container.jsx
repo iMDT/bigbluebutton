@@ -1,12 +1,13 @@
 import React, { PureComponent } from 'react';
 import { withTracker } from 'meteor/react-meteor-data';
-import MessageListItem from './component';
+import TimeWindowChatItem from './component';
 import ChatService from '../../service';
 
-class MessageListItemContainer extends PureComponent {
+class TimeWindowChatItemContainer extends PureComponent {
   render() {
+    console.log('TimeWindowChatItemContainer::render', {...this.props});
     return (
-      <MessageListItem {...this.props} />
+      <TimeWindowChatItem {...this.props} />
     );
   }
 }
@@ -14,8 +15,9 @@ class MessageListItemContainer extends PureComponent {
 export default withTracker(({ message }) => {
   const mappedMessage = ChatService.mapGroupMessage(message);
   const messages = mappedMessage.content;
-
+  console.log('TimeWindowChatItemContainer::withTracker', mappedMessage);
   return {
+    messageKey: mappedMessage.key,
     messages,
     user: mappedMessage.sender,
     time: mappedMessage.time,
@@ -30,4 +32,4 @@ export default withTracker(({ message }) => {
       }
     },
   };
-})(MessageListItemContainer);
+})(TimeWindowChatItemContainer);

@@ -30,7 +30,7 @@ const generateTimeWindow = (timestamp) => {
 
 export const ChatContext = createContext();
 
-const formatMsg = (msg, state) => {
+const formatMsg = ({ msg, senderData }, state) => {
   const timeWindow = generateTimeWindow(msg.timestamp);
   const userId = msg.sender.id;
   const keyName = userId + '-' + timeWindow;
@@ -39,6 +39,7 @@ const formatMsg = (msg, state) => {
     const msgTimewindow = generateTimeWindow(msg.timestamp);
     const key = msg.sender.id + '-' + msgTimewindow;
     const chatIndex = chat?.chatIndexes[key];
+    // const sender = Users.findOne({ userId: message.sender.id }, { fields: { avatar: 1, role: 1 } });
     const {
       _id,
       ...restMsg
@@ -48,6 +49,7 @@ const formatMsg = (msg, state) => {
     const tempGroupMessage = {
       [messageKey]: {
         ...restMsg,
+        key: messageKey,
         content: [
           { id: msg.id, text: msg.message, time: msg.timestamp },
         ],
@@ -89,6 +91,17 @@ const formatMsg = (msg, state) => {
     stateMessages.lastSender = senderId;
     stateMessages.chatIndexes[keyName] = newIndex;
     stateMessages.lastTimewindow = keyName + '-' + newIndex;
+    // console.log('ChatContext::formatMsg::msgBuilder', senderData);
+    // const senderInfo = {
+    //   id: senderData.userId,
+    //   avatar: senderData?.avatar,
+    //   color: senderData.color,
+    //   isModerator: sender?.role === ROLE_MODERATOR,
+    //   name: senderData.name,
+    //   isOnline: !!senderData,
+    // };
+
+    // tempGroupMessage.sender = senderInfo;
     const messageGroupsKeys = Object.keys(tempGroupMessage);
     messageGroupsKeys.forEach(key => messageGroups[key] = tempGroupMessage[key]);
   } else {
@@ -120,7 +133,7 @@ const reducer = (state, action) => {
       };
     }
     case ACTIONS.ADDED: {
-      const newState = formatMsg(action.value.msg, state);
+      const newState = formatMsg(action.value, state);
       return {...newState};
     }
     case ACTIONS.CHANGED: {

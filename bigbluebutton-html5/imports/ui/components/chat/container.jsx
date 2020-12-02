@@ -5,7 +5,7 @@ import { Session } from 'meteor/session';
 import Auth from '/imports/ui/services/auth';
 import Storage from '/imports/ui/services/storage/session';
 import { meetingIsBreakout } from '/imports/ui/components/app/service';
-import { ChatContext, getLoginTime } from './chat-context/context';
+import { ChatContext, getLoginTime } from '../components-data/chat-context/context';
 import Chat from './component';
 import _ from 'lodash';
 import ChatService from './service';
@@ -64,6 +64,7 @@ const ChatContainer = (props) => {
         text: welcomeProp.welcomeMsg,
         time: loginTime,
       }],
+      key: sysMessagesIds.welcomeId,
       time: loginTime,
       sender: null,
     },
@@ -74,6 +75,7 @@ const ChatContainer = (props) => {
         text: modOnlyMessage,
         time: loginTime+1,
       }],
+      key: sysMessagesIds.moderatorId,
       time: loginTime+1,
       sender: null,
     }
@@ -104,7 +106,6 @@ const ChatContainer = (props) => {
       setLastMsg({ ...lastMsg });
       setTimeWindows(timeWindowsValues);
     }
-    
   return (
     <Chat {...{ ...props, chatID, amIModerator, contextChat, timeWindowsValues: stateTimeWindows }}>
       {children}

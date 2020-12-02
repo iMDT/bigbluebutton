@@ -7,7 +7,7 @@ import { Session } from 'meteor/session';
 import withShortcutHelper from '/imports/ui/components/shortcut-help/service';
 import { styles } from './styles.scss';
 import MessageForm from './message-form/container';
-import MessageList from './message-list/container';
+import TimeWindowList from './time-window-list/container';
 import ChatDropdownContainer from './chat-dropdown/container';
 
 const ELEMENT_ID = 'chat-messages';
@@ -94,7 +94,7 @@ const Chat = (props) => {
             : <ChatDropdownContainer {...{ meetingIsBreakout, isMeteorConnected, amIModerator }} />
         }
       </header>
-      <MessageList
+      <TimeWindowList
         id={ELEMENT_ID}
         chatId={chatID}
         handleScrollUpdate={actions.handleScrollUpdate}
