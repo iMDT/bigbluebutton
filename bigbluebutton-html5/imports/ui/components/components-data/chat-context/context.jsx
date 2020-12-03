@@ -16,6 +16,8 @@ export const ACTIONS = {
   USER_STATUS_CHANGED: 'user_status_changed',
 };
 
+const ROLE_MODERATOR = Meteor.settings.public.user.role_moderator;
+
 export const getGroupingTime = () => Meteor.settings.public.chat.grouping_messages_window;
 export const getGroupChatId = () => Meteor.settings.public.chat.public_group_id;
 export const getLoginTime = () => (Users.findOne({ userId: Auth.userID }) || {}).loginTime || 0;
@@ -35,7 +37,7 @@ const formatMsg = ({ msg, senderData }, state) => {
   const userId = msg.sender.id;
   const keyName = userId + '-' + timeWindow;
 
-  const msgBuilder = (msg, chat) => {
+  const msgBuilder = ({msg, senderData}, chat) => {
     const msgTimewindow = generateTimeWindow(msg.timestamp);
     const key = msg.sender.id + '-' + msgTimewindow;
     const chatIndex = chat?.chatIndexes[key];
@@ -44,6 +46,16 @@ const formatMsg = ({ msg, senderData }, state) => {
       _id,
       ...restMsg
     } = msg;
+    // console.log('restMsg', restMsg, senderData);
+    const senderInfo = {
+      id: senderData.userId,
+      avatar: senderData?.avatar,
+      color: senderData.color,
+      isModerator: senderData?.role === ROLE_MODERATOR,
+      name: senderData.name,
+      isOnline: !!senderData,
+    };
+
     const indexValue = chatIndex ? (chatIndex + 1) : 1;
     const messageKey = key + '-' + indexValue;
     const tempGroupMessage = {
@@ -53,8 +65,10 @@ const formatMsg = ({ msg, senderData }, state) => {
         content: [
           { id: msg.id, text: msg.message, time: msg.timestamp },
         ],
+        sender: senderInfo,
       }
     };
+  
     return [tempGroupMessage, msg.sender, indexValue];
   };
 
@@ -68,7 +82,6 @@ const formatMsg = ({ msg, senderData }, state) => {
         posJoinMessages: {},
       };
     } else {
-      const [tempGroupMessage, senderId, newIndex] = msgBuilder(msg, stateMessages);
       state[msg.chatId] = {
         lastSender: '',
         chatIndexes: {},
@@ -86,27 +99,18 @@ const formatMsg = ({ msg, senderData }, state) => {
   const timewindowIndex = stateMessages.chatIndexes[keyName];
   const groupMessage = messageGroups[keyName + '-' + timewindowIndex];
 
-  if (!groupMessage || (groupMessage && groupMessage.sender !== stateMessages.lastSender)) {
-    const [tempGroupMessage, senderId, newIndex] = msgBuilder(msg, stateMessages);
-    stateMessages.lastSender = senderId;
+  if (!groupMessage || (groupMessage && groupMessage.sender.id !== stateMessages.lastSender.id)) {
+    const [tempGroupMessage, sender, newIndex] = msgBuilder({msg, senderData}, stateMessages);
+    stateMessages.lastSender = sender;
     stateMessages.chatIndexes[keyName] = newIndex;
     stateMessages.lastTimewindow = keyName + '-' + newIndex;
-    // console.log('ChatContext::formatMsg::msgBuilder', senderData);
-    // const senderInfo = {
-    //   id: senderData.userId,
-    //   avatar: senderData?.avatar,
-    //   color: senderData.color,
-    //   isModerator: sender?.role === ROLE_MODERATOR,
-    //   name: senderData.name,
-    //   isOnline: !!senderData,
-    // };
-
-    // tempGroupMessage.sender = senderInfo;
+    console.log('ChatContext::formatMsg::msgBuilder::tempGroupMessage', tempGroupMessage);
+    
     const messageGroupsKeys = Object.keys(tempGroupMessage);
     messageGroupsKeys.forEach(key => messageGroups[key] = tempGroupMessage[key]);
   } else {
     if (groupMessage) {
-      if (groupMessage.sender === stateMessages.lastSender) {
+      if (groupMessage.sender.id === stateMessages.lastSender.id) {
         messageGroups[keyName + '-' + stateMessages.chatIndexes[keyName]] = {
           ...groupMessage,
           content: [

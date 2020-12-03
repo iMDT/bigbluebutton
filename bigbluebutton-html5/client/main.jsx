@@ -26,7 +26,8 @@ import AuthenticatedHandler from '/imports/ui/components/authenticated-handler/c
 import Subscriptions from '/imports/ui/components/subscriptions/component';
 import IntlStartup from '/imports/startup/client/intl';
 import ContextProviders from '/imports/ui/components/context-providers/component';
-import ChatAdapter from '/imports/ui/components/chat/chat-context/adapter';
+import ChatAdapter from '/imports/ui/components/components-data/chat-context/adapter';
+import UsersAdapter from '/imports/ui/components/components-data/users-context/adapter';
 
 Meteor.startup(() => {
   // Logs all uncaught exceptions to the client logger
@@ -64,6 +65,7 @@ Meteor.startup(() => {
             </Subscriptions>
           </AuthenticatedHandler>
         </JoinHandler>
+        <UsersAdapter />
         <ChatAdapter />
       </React.Fragment>
     </ContextProviders>,
