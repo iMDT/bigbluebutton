@@ -11,7 +11,7 @@ const Adapter = () => {
   const usingUsersContext = useContext(UsersContext);
   const { users } = usingUsersContext;
   console.log('chatAdapter::body::users', users);
-  useEffect(()=> {
+  useEffect(() => {
     usersData = users;
   }, [usingUsersContext]);
 

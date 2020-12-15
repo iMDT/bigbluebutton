@@ -42,6 +42,18 @@ const intlMessages = defineMessages({
   },
 });
 
+let lastExecution = 0;
+let bindedFunc = ()=> {};
+const test = ()=> {
+  const now = Date.now();
+  console.log('lastExecution', lastExecution, now - lastExecution);
+  lastExecution = now;
+
+  bindedFunc();
+}
+
+const throttledFunc = _.throttle(test, 5000);
+
 const ChatContainer = (props) => {
   useEffect(() => {
     ChatService.removeFromClosedChatsSession();
@@ -86,28 +98,30 @@ const ChatContainer = (props) => {
   const usingChatContext = useContext(ChatContext);
   const [stateLastMsg, setLastMsg] = useState(null);
   const [stateTimeWindows, setTimeWindows] = useState(chatID === PUBLIC_CHAT_KEY ? [...systemMessagesIds.map((item)=> systemMessages[item])]: [] );
-
+  
   
   if (unmounting === true) {
     return null;
   }
 
   const contextChat = usingChatContext.chats[chatID === PUBLIC_CHAT_KEY ? PUBLIC_GROUP_CHAT_KEY : chatID];
-    const lastTimeWindow = contextChat?.lastTimewindow;
+  const lastTimeWindow = contextChat?.lastTimewindow;
   const lastMsg = contextChat && (chatID === PUBLIC_CHAT_KEY 
   ? contextChat.preJoinMessages[lastTimeWindow] || contextChat.posJoinMessages[lastTimeWindow]
   : contextChat.messageGroups[lastTimeWindow]);
-
+  
   let timeWindowsValues = [];
   if (!_.isEqualWith(lastMsg, stateLastMsg) && lastMsg) {
     timeWindowsValues = chatID === PUBLIC_CHAT_KEY
-      ? [...Object.values(contextChat.preJoinMessages), ...systemMessagesIds.map((item)=> systemMessages[item]), ...Object.values(contextChat.posJoinMessages)]
-      : [...Object.values(contextChat.messageGroups)];
-      setLastMsg({ ...lastMsg });
-      setTimeWindows(timeWindowsValues);
+    ? [...Object.values(contextChat.preJoinMessages), ...systemMessagesIds.map((item)=> systemMessages[item]), ...Object.values(contextChat.posJoinMessages)]
+    : [...Object.values(contextChat.messageGroups)];
+    setLastMsg({ ...lastMsg });
+    bindedFunc = setTimeWindows.bind(null, timeWindowsValues);
+    throttledFunc();
     }
+    console.log('kkkkkkkkkk', contextChat, usingChatContext?.dispatch);
   return (
-    <Chat {...{ ...props, chatID, amIModerator, contextChat, timeWindowsValues: stateTimeWindows }}>
+    <Chat {...{ ...props, chatID, amIModerator, count: contextChat?.count, timeWindowsValues: stateTimeWindows, dispatch: usingChatContext.dispatch}}>
       {children}
     </Chat>
   );

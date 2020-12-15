@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { withTracker } from 'meteor/react-meteor-data';
 import TimeWindowChatItem from './component';
+import ChatService from '../../service';
 
 const isDefaultPoll = (pollText) => {
   const pollValue = pollText.replace(/<br\/>|[ :|%\n\d+]/g, '');
@@ -15,21 +16,23 @@ const isDefaultPoll = (pollText) => {
 export default class TimeWindowChatItemContainer extends PureComponent {
   render() {
     console.log('TimeWindowChatItemContainer::render', { ...this.props });
-    const { message } = this.props;
-    const messages = message.content;
+    // const { message } = ;
+    const messages = this.props.message.content;
 
-    const user = message.sender;
-    const messageKey = message.key;
-    const { time } = message;
+    const user = this.props.message.sender;
+    const messageKey = this.props.message.key;
+    const time = this.props.message.time;
     return (
       <TimeWindowChatItem
         {
         ...{
+          read: this.props.message.read,
           messages,
           isDefaultPoll,
           user,
           time,
           messageKey,
+          handleReadMessage: ChatService.updateUnreadMessage,
           ...this.props,
         }
         }

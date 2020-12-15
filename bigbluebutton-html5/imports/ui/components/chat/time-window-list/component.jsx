@@ -33,11 +33,6 @@ const propTypes = {
 const defaultProps = {
   scrollPosition: null,
   lastReadMessageTime: 0,
-  contextChat: {
-    messageGroups:{},
-    preJoinMessages:{},
-    posJoinMessages:{},
-  }
 };
 
 const intlMessages = defineMessages({
@@ -92,26 +87,26 @@ class TimeWindowList extends PureComponent {
     const {
       scrollPosition,
     } = this.props;
-    this.scrollTo(scrollPosition);
+    // this.scrollTo(scrollPosition);
 
-    const { childNodes } = this.messageListWrapper;
-    this.virualRef = childNodes ? childNodes[0].firstChild : null;
+    // const { childNodes } = this.messageListWrapper;
+    // this.virualRef = childNodes ? childNodes[0].firstChild : null;
 
-    if (this.virualRef) {
-      this.virualRef.style.direction = document.documentElement.dir;
-    }
+    // if (this.virualRef) {
+    //   this.virualRef.style.direction = document.documentElement.dir;
+    // }
   
-    this.scrollInterval = setInterval(() => {
-      const {
-        scrollArea,
-      } = this.state;
+    // this.scrollInterval = setInterval(() => {
+    //   const {
+    //     scrollArea,
+    //   } = this.state;
 
-      if (scrollArea.scrollTop + scrollArea.offsetHeight === scrollArea.scrollHeight) {
-        this.setState({
-          userScrolledBack: false,
-        });
-      }
-    }, 100);
+    //   if (scrollArea.scrollTop + scrollArea.offsetHeight === scrollArea.scrollHeight) {
+    //     this.setState({
+    //       userScrolledBack: false,
+    //     });
+    //   }
+    // }, 100);
     
   }
 
@@ -127,6 +122,8 @@ class TimeWindowList extends PureComponent {
       scrollPosition,
       chatId,
       timeWindowsValues,
+      userSentMessage,
+      setUserSentMessage,
     } = this.props;
 
     const {
@@ -138,11 +135,6 @@ class TimeWindowList extends PureComponent {
       lastMessage: stateLastMsg,
     } = this.state;
 
-    if (prevChatId !== chatId) {
-      this.cache.clearAll();
-      setTimeout(() => this.scrollTo(scrollPosition), 300);
-    } 
-
     const lastMsg = timeWindowsValues[timeWindowsValues.length - 1];
     const prevLastMsg = prevTimeWindowsValues[prevTimeWindowsValues.length - 1];
 
@@ -151,7 +143,11 @@ class TimeWindowList extends PureComponent {
       this.resizeRow(timeWindowsValues.length-1);
     }
 
-    
+    if (userSentMessage && !prevProps.userSentMessage){
+      this.setState({
+        userScrolledBack: false,
+      }, ()=> setUserSentMessage(false));
+    }
   }
 
   componentWillUnmount() {
@@ -197,15 +193,16 @@ class TimeWindowList extends PureComponent {
     key,
   }) {
     const {
-      handleReadMessage,
       lastReadMessageTime,
       id,
       timeWindowsValues,
+      dispatch,
+      chatId,
     } = this.props;
     
     const { scrollArea, } = this.state;
     const message = timeWindowsValues[index];
-  
+    console.log('TimeWindowList::rowRender', this.props);
     // it's to get an accurate size of the welcome message because it changes after initial render
     if (message.sender === null && !this.systemMessagesResized[index]) {
       setTimeout(() => this.resizeRow(index), 500);
@@ -224,15 +221,15 @@ class TimeWindowList extends PureComponent {
           style={style}
           key={`span-${key}-${index}`}
         >
+          {/* messages per timewindow: {message.content.length} */}
           <TimeWindowChatItem
-            style={style}
-            handleReadMessage={handleReadMessage}
             key={key}
             message={message}
             messageId={message.id}
             chatAreaId={id}
-            lastReadMessageTime={lastReadMessageTime}
             scrollArea={scrollArea}
+            dispatch={dispatch}
+            chatId={chatId}
           />
         </span>
       </CellMeasurer>
@@ -242,11 +239,11 @@ class TimeWindowList extends PureComponent {
   renderUnreadNotification() {
     const {
       intl,
-      hasUnreadMessages,
+      count,
     } = this.props;
     const { userScrolledBack } = this.state;
 
-    if (hasUnreadMessages && userScrolledBack) {
+    if (count && userScrolledBack) {
       return (
         <Button
           aria-hidden="true"
@@ -274,7 +271,35 @@ class TimeWindowList extends PureComponent {
       userScrolledBack,
     } = this.state;
     console.log('TimeWindowList::render', {...this.props},  {...this.state});
-
+    // return (
+    //   <div className={styles.messageListWrapper}>
+    //     <div
+    //       role="log"
+    //       // ref={(ref) => { if (ref != null) { this.scrollArea = ref; } }}
+    //       // id={id}
+    //       className={styles.messageList}
+    //       // aria-live="polite"
+    //       // aria-atomic="false"
+    //       // aria-relevant="additions"
+    //       // aria-label={isEmpty ? intl.formatMessage(intlMessages.emptyLogLabel) : ''}
+    //     >
+    //       {timeWindowsValues.map(message => (
+    //         <div key={message.id}>messages per timewindow: {message.content.length}</div>
+    //         <MessageListItem
+    //           handleReadMessage={handleReadMessage}
+    //           key={message.id}
+    //           messages={message.content}
+    //           user={message.sender}
+    //           time={message.time}
+    //           chatAreaId={id}
+    //           lastReadMessageTime={lastReadMessageTime}
+    //           scrollArea={scrollArea}
+    //         />
+    //       ))}
+    //     </div>
+    //     {this.renderUnreadNotification()}
+    //   </div>
+    // );
     return (
       [<div 
         onMouseDown={()=> {
@@ -320,9 +345,12 @@ class TimeWindowList extends PureComponent {
                 rowCount={timeWindowsValues.length}
                 height={height}
                 width={width}
-                overscanRowCount={5}
+                overscanRowCount={15}
                 deferredMeasurementCache={this.cache}
-                scrollToIndex={!userScrolledBack ? timeWindowsValues.length - 1 : undefined}
+                scrollToIndex={
+                  timeWindowsValues.length - 1
+                  // !userScrolledBack ? timeWindowsValues.length - 1 : undefined
+                }
               />
             );
           }}

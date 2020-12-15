@@ -8,12 +8,17 @@ import React, {
 import Users from '/imports/api/users';
 import Auth from '/imports/ui/services/auth';
 
+const CHAT_CONFIG = Meteor.settings.public.chat;
+const PUBLIC_CHAT_KEY = CHAT_CONFIG.public_id;
+const PUBLIC_GROUP_CHAT_KEY = CHAT_CONFIG.public_group_id;
+
 export const ACTIONS = {
   TEST: 'test',
   ADDED: 'added',
   CHANGED: 'changed',
   REMOVED: 'removed',
   USER_STATUS_CHANGED: 'user_status_changed',
+  LAST_READ_MESSAGE_TIMESTAMP_CHANGED: 'last_read_message_timestamp_changed',
 };
 
 const ROLE_MODERATOR = Meteor.settings.public.user.role_moderator;
@@ -25,7 +30,7 @@ export const getLoginTime = () => (Users.findOne({ userId: Auth.userID }) || {})
 const generateTimeWindow = (timestamp) => {
   const groupingTime = getGroupingTime();
   dateInMilliseconds = Math.floor(timestamp);
-  groupIndex = Math.floor(dateInMilliseconds / 30000)
+  groupIndex = Math.floor(dateInMilliseconds / groupingTime)
   date = groupIndex * 30000;
   return date;
 }
@@ -62,6 +67,8 @@ const formatMsg = ({ msg, senderData }, state) => {
       [messageKey]: {
         ...restMsg,
         key: messageKey,
+        lastTimestamp: msg.timestamp,
+        read: msg.chatId === PUBLIC_CHAT_KEY && msg.timestamp <= getLoginTime() ? true : false,
         content: [
           { id: msg.id, text: msg.message, time: msg.timestamp },
         ],
@@ -77,12 +84,14 @@ const formatMsg = ({ msg, senderData }, state) => {
   if (!stateMessages) {
     if (msg.chatId === getGroupChatId()) {
       state[msg.chatId] = {
+        count: 0,
         chatIndexes: {},
         preJoinMessages: {},
         posJoinMessages: {},
       };
     } else {
       state[msg.chatId] = {
+        count: 0,
         lastSender: '',
         chatIndexes: {},
         messageGroups: {},
@@ -108,16 +117,21 @@ const formatMsg = ({ msg, senderData }, state) => {
     
     const messageGroupsKeys = Object.keys(tempGroupMessage);
     messageGroupsKeys.forEach(key => messageGroups[key] = tempGroupMessage[key]);
+    stateMessages.count = (stateMessages.count + 1);
   } else {
     if (groupMessage) {
       if (groupMessage.sender.id === stateMessages.lastSender.id) {
         messageGroups[keyName + '-' + stateMessages.chatIndexes[keyName]] = {
           ...groupMessage,
+          lastTimestamp: msg.timestamp,
+
+          read: msg.chatId === PUBLIC_CHAT_KEY && msg.timestamp <= getLoginTime() ? true : false,
           content: [
             ...groupMessage.content,
             { id: msg.id, text: msg.message, time: msg.timestamp }
           ],
         };
+        // stateMessages.count = (stateMessages.count+1);
       }
     }
   }
@@ -130,13 +144,14 @@ const formatMsg = ({ msg, senderData }, state) => {
 const reducer = (state, action) => {
   switch (action.type) {
     case ACTIONS.TEST: {
-
+      console.log(ACTIONS.TEST);
       return {
         ...state,
         ...action.value,
       };
     }
     case ACTIONS.ADDED: {
+      console.log(ACTIONS.ADDED);
       const newState = formatMsg(action.value, state);
       return {...newState};
     }
@@ -147,12 +162,14 @@ const reducer = (state, action) => {
       };
     }
     case ACTIONS.REMOVED: {
+      console.log(ACTIONS.REMOVED);
       if (state[msg.chatId]){
         delete state[msg.chatId];
       }
       return state;
     }
     case ACTIONS.USER_STATUS_CHANGED: {
+      console.log(ACTIONS.USER_STATUS_CHANGED);
       const newState = {
         ...state,
       };
@@ -182,14 +199,55 @@ const reducer = (state, action) => {
       });
       return newState
     }
+    case ACTIONS.LAST_READ_MESSAGE_TIMESTAMP_CHANGED: {
+      console.log(ACTIONS.LAST_READ_MESSAGE_TIMESTAMP_CHANGED);
+      const { timestamp, chatId } = action.value;
+      const newState = {
+        ...state,
+      };
+      const selectedChatId = chatId === PUBLIC_CHAT_KEY ? PUBLIC_GROUP_CHAT_KEY : chatId;
+      const chat = state[selectedChatId];
+      ['posJoinMessages','preJoinMessages','messageGroups'].forEach( messageGroupName => {
+        const messageGroup = chat[messageGroupName];
+        if (messageGroup){
+          const timeWindowsids = Object.keys(messageGroup);
+          timeWindowsids.forEach( timeWindowId => {
+            const timeWindow = messageGroup[timeWindowId];
+            if(timeWindow) {
+              if (!timeWindow.read) {
+                if (timeWindow.lastTimestamp <= timestamp){
+                  newState[selectedChatId][messageGroupName][timeWindowId] = {
+                    ...timeWindow,
+                    read: true,
+                  };
+                  newState[selectedChatId] = {
+                    ...newState[selectedChatId],
+                    count: (newState[selectedChatId].count - 1) < 0 ? 0 : (newState[selectedChatId].count - 1),
+                  };
+                  newState[selectedChatId][messageGroupName] = {
+                    ...newState[selectedChatId][messageGroupName],
+                  };
+                  newState[chatId === PUBLIC_CHAT_KEY ? PUBLIC_GROUP_CHAT_KEY : chatId][messageGroupName][timeWindowId] = {
+                    ...newState[selectedChatId][messageGroupName][timeWindowId],
+                  };
+                }
+              }
+            }
+          });
+        }
+
+      });
+      return newState;
+    }
     default: {
-      throw new Error('Unexpected action');
+      throw new Error(`Unexpected action: ${JSON.stringify(action)}`);
     }
   }
 };
 
 export const ChatContextProvider = (props) => {
   const [chatContextState, chatContextDispatch] = useReducer(reducer, {});
+  console.log('dispatch', chatContextDispatch);
   return (
     <ChatContext.Provider value={
       {

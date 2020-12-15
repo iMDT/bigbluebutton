@@ -46,30 +46,15 @@ const intlMessages = defineMessages({
 });
 
 class TimeWindowChatItem extends PureComponent {
-  // shouldComponentUpdate(nextProps) {
-  //   const {
-  //     scrollArea,
-  //     messages,
-  //     user,
-  //     messageId,
-  //   } = this.props;
+  componentDidUpdate(prevProps, prevState) {
+    console.log('TimeWindowChatItem::componentDidUpdate::props', { ...this.props }, { ...prevProps });
+    console.log('TimeWindowChatItem::componentDidUpdate::state', { ...this.state }, { ...prevState });
+  }
 
-  //   const {
-  //     scrollArea: nextScrollArea,
-  //     messages: nextMessages,
-  //     user: nextUser,
-  //     messageId: nextMessageId,
-  //   } = nextProps;
-
-  //   if (!scrollArea && nextScrollArea) return true;
-
-  //   const hasNewMessage = messages.length !== nextMessages.length;
-  //   const hasIdChanged = messageId !== nextMessageId;
-  //   const hasUserChanged = user && nextUser
-  //     && (user.isModerator !== nextUser.isModerator || user.isOnline !== nextUser.isOnline);
-
-  //   return hasNewMessage || hasIdChanged || hasUserChanged;
-  // }
+  componentWillMount(){
+    console.log('TimeWindowChatItem::componentDidUpdate::props', { ...this.props });
+    console.log('TimeWindowChatItem::componentDidUpdate::state', { ...this.state });
+  }
 
   renderSystemMessage() {
     const {
@@ -105,12 +90,13 @@ class TimeWindowChatItem extends PureComponent {
       user,
       time,
       chatAreaId,
-      lastReadMessageTime,
-      handleReadMessage,
       scrollArea,
       intl,
       messages,
       messageKey,
+      dispatch,
+      chatId,
+      read,
     } = this.props;
 
     if (messages && messages[0].text.includes('bbb-published-poll-<br/>')) {
@@ -119,7 +105,7 @@ class TimeWindowChatItem extends PureComponent {
 
     const dateTime = new Date(time);
     const regEx = /<a[^>]+>/i;
-    console.log('TimeWindowChatItem::renderMessageItem', messageKey, messages);
+    console.log('TimeWindowChatItem::renderMessageItem', this.props);
     return (
       <div className={styles.item} key={`time-window-${messageKey}`}>
         <div className={styles.wrapper}>
@@ -157,8 +143,19 @@ class TimeWindowChatItem extends PureComponent {
                   text={message.text}
                   time={message.time}
                   chatAreaId={chatAreaId}
-                  lastReadMessageTime={lastReadMessageTime}
-                  handleReadMessage={handleReadMessage}
+                  dispatch={dispatch}
+                  read={message.read}
+                  handleReadMessage={(timestamp) => {
+                    if (!read) {
+                      dispatch({
+                        type: 'last_read_message_timestamp_changed',
+                        value: {
+                          chatId,
+                          timestamp,
+                        },
+                      });
+                    }
+                  }}
                   scrollArea={scrollArea}
                 />
               ))}

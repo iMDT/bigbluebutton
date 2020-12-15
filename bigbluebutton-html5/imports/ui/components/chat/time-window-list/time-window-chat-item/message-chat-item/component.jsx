@@ -57,8 +57,9 @@ class MessageChatItem extends PureComponent {
     this.listenToUnreadMessages();
   }
 
-  componentDidUpdate(prevProps) {
-    console.log('MessageChatItem::componentDidUpdate', {...prevProps}, {...this.props});
+  componentDidUpdate(prevProps, prevState) {
+    console.log('MessageChatItem::componentDidUpdate::props', { ...this.props }, { ...prevProps });
+    console.log('MessageChatItem::componentDidUpdate::state', { ...this.state }, { ...prevState });
     this.listenToUnreadMessages();
   }
 
@@ -85,21 +86,22 @@ class MessageChatItem extends PureComponent {
   }
 
   handleMessageInViewport() {
+    
     if (!this.ticking) {
       fastdom.measure(() => {
         const node = this.text;
         const {
           handleReadMessage,
           time,
-          lastReadMessageTime,
+          read,
         } = this.props;
 
-        if (lastReadMessageTime > time) {
+        if (read) {
           this.removeScrollListeners();
           return;
         }
 
-        if (isElementInViewport(node)) {
+        if (isElementInViewport(node) && !read) {
           handleReadMessage(time);
           this.removeScrollListeners();
         }
@@ -114,9 +116,10 @@ class MessageChatItem extends PureComponent {
   removeScrollListeners() {
     const {
       scrollArea,
+      read,
     } = this.props;
 
-    if (scrollArea) {
+    if (scrollArea && !read) {
       eventsToBeBound.forEach(
         e => scrollArea.removeEventListener(e, this.handleMessageInViewport),
       );
@@ -129,10 +132,10 @@ class MessageChatItem extends PureComponent {
     const {
       handleReadMessage,
       time,
-      lastReadMessageTime,
+      read,
     } = this.props;
 
-    if (lastReadMessageTime > time) {
+    if (read) {
       return;
     }
 
@@ -140,11 +143,11 @@ class MessageChatItem extends PureComponent {
 
     fastdom.measure(() => {
       const {
-        lastReadMessageTime: updatedLastReadMessageTime,
+        read: newRead,
       } = this.props;
       // this function is called after so we need to get the updated lastReadMessageTime
 
-      if (updatedLastReadMessageTime > time) {
+      if (newRead) {
         return;
       }
 

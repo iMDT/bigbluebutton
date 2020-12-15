@@ -28,10 +28,19 @@ const ScrollCollection = new Mongo.Collection(null);
 
 const UnsentMessagesCollection = new Mongo.Collection(null);
 
+export const UserSentMessageCollection = new Mongo.Collection(null);
+
 // session for closed chat list
 const CLOSED_CHAT_LIST_KEY = 'closedChatList';
 
 const POLL_MESSAGE_PREFIX = 'bbb-published-poll-<br/>';
+
+const setUserSentMessage = (bool) => {
+  UserSentMessageCollection.upsert(
+    { userId: Auth.userID },
+    { $set: { sent: bool } },
+  );
+}
 
 const getUser = userId => Users.findOne({ userId });
 
@@ -364,6 +373,7 @@ const getLastMessageTimestampFromChatList = activeChats => activeChats
   .reduce(maxNumberReducer, 0);
 
 export default {
+  setUserSentMessage,
   mapGroupMessage,
   reduceAndMapGroupMessages,
   reduceAndDontMapGroupMessages,

@@ -1,14 +1,15 @@
 import React, { PureComponent } from 'react';
 import { withTracker } from 'meteor/react-meteor-data';
 import TimeWindowList from './component';
-import ChatService from '../service';
-
+import Auth from '/imports/ui/services/auth';
+import ChatService, { UserSentMessageCollection } from '../service';
 export default class TimeWindowListContainer extends PureComponent {
   render() {
     const { chatId } = this.props;
     const hasUnreadMessages = ChatService.hasUnreadMessages(chatId);
     const scrollPosition = ChatService.getScrollPosition(chatId);
     const lastReadMessageTime = ChatService.lastReadMessageTime(chatId);
+    const userSentMessage = UserSentMessageCollection.findOne({ userId: Auth.userID, sent: true });
     console.log('TimeWindowListContainer::render', { ...this.props });
     return (
       <TimeWindowList
@@ -19,7 +20,8 @@ export default class TimeWindowListContainer extends PureComponent {
           scrollPosition,
           lastReadMessageTime,
           handleScrollUpdate: ChatService.updateScrollPosition,
-          handleReadMessage: ChatService.updateUnreadMessage,
+          userSentMessage,
+          setUserSentMessage: ChatService.setUserSentMessage,
         }
         }
       />

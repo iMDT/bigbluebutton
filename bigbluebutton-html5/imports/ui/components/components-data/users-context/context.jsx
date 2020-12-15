@@ -49,7 +49,7 @@ const reducer = (state, action) => {
       return state;
     }
     default: {
-      throw new Error('Unexpected action');
+      throw new Error(`Unexpected action: ${JSON.stringify(action)}`);
     }
   }
 };
