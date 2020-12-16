@@ -52,8 +52,8 @@ class TimeWindowChatItem extends PureComponent {
   }
 
   componentWillMount(){
-    console.log('TimeWindowChatItem::componentDidUpdate::props', { ...this.props });
-    console.log('TimeWindowChatItem::componentDidUpdate::state', { ...this.state });
+    console.log('TimeWindowChatItem::componentWillMount::props', { ...this.props });
+    console.log('TimeWindowChatItem::componentWillMount::state', { ...this.state });
   }
 
   renderSystemMessage() {
@@ -75,6 +75,7 @@ class TimeWindowChatItem extends PureComponent {
                   key={message.id ? message.id : _.uniqueId('id-')}
                   text={message.text}
                   time={message.time}
+                  isSystemMessage={message.id ? true : false}
                   chatAreaId={chatAreaId}
                   handleReadMessage={handleReadMessage}
                 />
@@ -97,6 +98,7 @@ class TimeWindowChatItem extends PureComponent {
       dispatch,
       chatId,
       read,
+      chatUserMessageItem,
     } = this.props;
 
     if (messages && messages[0].text.includes('bbb-published-poll-<br/>')) {
@@ -135,7 +137,7 @@ class TimeWindowChatItem extends PureComponent {
                 <FormattedTime value={dateTime} />
               </time>
             </div>
-            <div className={styles.messages} data-test="chatUserMessage">
+            <div className={styles.messages}>
               {messages.map(message => (
                 <MessageChatItem
                   className={(regEx.test(message.text) ? styles.hyperlink : styles.message)}

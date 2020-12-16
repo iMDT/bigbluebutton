@@ -190,7 +190,7 @@ class MessageChatItem extends PureComponent {
         style={{ borderLeft: `3px ${color} solid` }}
         ref={(ref) => { this.text = ref; }}
         dangerouslySetInnerHTML={{ __html: isDefaultPoll ? formatBoldBlack(_text) : _text }}
-        data-test="chatMessageText"
+        data-test="chatPollMessageText"
       />
     );
   }
@@ -200,6 +200,8 @@ class MessageChatItem extends PureComponent {
       text,
       type,
       className,
+      isSystemMessage,
+      chatUserMessageItem,
     } = this.props;
     console.log('MessageChatItem::render', this.props);
     if (type === 'poll') return this.renderPollListItem();
@@ -209,7 +211,7 @@ class MessageChatItem extends PureComponent {
         className={className}
         ref={(ref) => { this.text = ref; }}
         dangerouslySetInnerHTML={{ __html: text }}
-        data-test="chatMessageText"
+        data-test={isSystemMessage ? 'chatWelcomeMessageText' : chatUserMessageItem ? 'chatUserMessageText' : 'chatClearMessageText'}
       />
     );
   }

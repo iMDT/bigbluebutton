@@ -10,7 +10,7 @@ export default class TimeWindowListContainer extends PureComponent {
     const scrollPosition = ChatService.getScrollPosition(chatId);
     const lastReadMessageTime = ChatService.lastReadMessageTime(chatId);
     const userSentMessage = UserSentMessageCollection.findOne({ userId: Auth.userID, sent: true });
-    console.log('TimeWindowListContainer::render', { ...this.props });
+    console.log('TimeWindowListContainer::render', { ...this.props }, new Date());
     return (
       <TimeWindowList
         {

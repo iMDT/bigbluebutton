@@ -168,7 +168,6 @@ HERE
   mkdir -p /etc/systemd/system/bbb-webrtc-sfu.service.d
   cat > /etc/systemd/system/bbb-webrtc-sfu.service.d/override.conf << HERE
 [Unit]
-After=
 After=syslog.target network.target freeswitch.service kurento-media-server-8888.service kurento-media-server-8889.service kurento-media-server-8890.service
 HERE
 
@@ -226,6 +225,19 @@ disableMultipleKurentos() {
   yq w -i $KURENTO_CONFIG balancing-strategy ROUND_ROBIN
 }
 
+setNumberOfHTML5Processes() {
+  HTML5_RESTRICTIONS_FILE=/usr/share/meteor/bundle/bbb-html5.conf
+  NUMBER_OF_PROCESSES=`echo $1 | bc`
+
+  source $HTML5_RESTRICTIONS_FILE
+
+  echo "setNumberOfHTML5Processes with number of processes in the range ($INSTANCE_MIN to $INSTANCE_MAX)"
+  echo "setNumberOfHTML5Processes with NUMBER_OF_PROCESSES=$NUMBER_OF_PROCESSES"
+
+  sed -i -e "s|DESIRED_INSTANCE_COUNT=.*$|DESIRED_INSTANCE_COUNT=$NUMBER_OF_PROCESSES|g" $HTML5_RESTRICTIONS_FILE
+
+  systemctl restart bbb-html5
+}
 
 
 notCalled() {
@@ -254,6 +266,9 @@ source /etc/bigbluebutton/bbb-conf/apply-lib.sh
 #enableHTML5WebcamPagination
 
 #enableMultipleKurentos
+
+#setNumberOfHTML5Processes 2
+
 
 HERE
 chmod +x /etc/bigbluebutton/bbb-conf/apply-config.sh

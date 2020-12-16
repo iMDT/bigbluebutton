@@ -270,7 +270,7 @@ class TimeWindowList extends PureComponent {
       scrollArea,
       userScrolledBack,
     } = this.state;
-    console.log('TimeWindowList::render', {...this.props},  {...this.state});
+    console.log('TimeWindowList::render', {...this.props},  {...this.state}, new Date());
     // return (
     //   <div className={styles.messageListWrapper}>
     //     <div
@@ -345,7 +345,7 @@ class TimeWindowList extends PureComponent {
                 rowCount={timeWindowsValues.length}
                 height={height}
                 width={width}
-                overscanRowCount={15}
+                overscanRowCount={0}
                 deferredMeasurementCache={this.cache}
                 scrollToIndex={
                   timeWindowsValues.length - 1
