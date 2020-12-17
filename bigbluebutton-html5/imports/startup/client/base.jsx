@@ -23,6 +23,7 @@ import { withLayoutContext } from '/imports/ui/components/layout/context';
 import VideoService from '/imports/ui/components/video-provider/service';
 import ContextProviders from '/imports/ui/components/context-providers/component';
 import DebugWindow from '/imports/ui/components/debug-window/component'
+import ChatLogger from '/imports/ui/components/chat/chat-logger/ChatLogger';
 import {Meteor} from "meteor/meteor";
 
 const CHAT_CONFIG = Meteor.settings.public.chat;

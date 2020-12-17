@@ -8,16 +8,15 @@ import {
   List, AutoSizer, CellMeasurer, CellMeasurerCache,
 } from 'react-virtualized';
 import { styles } from './styles';
+import ChatLogger from '/imports/ui/components/chat/chat-logger/ChatLogger';
 import TimeWindowChatItem from './time-window-chat-item/container';
 
+window.test = CellMeasurer;
 
 
 const CHAT_CONFIG = Meteor.settings.public.chat;
-const PUBLIC_CHAT_KEY = CHAT_CONFIG.public_id;
-const SYSTEM_CHAT_TYPE = CHAT_CONFIG.type_system;
 
 const propTypes = {
-  messages: PropTypes.arrayOf(PropTypes.object).isRequired,
   scrollPosition: PropTypes.number,
   chatId: PropTypes.string.isRequired,
   hasUnreadMessages: PropTypes.bool.isRequired,
@@ -45,14 +44,6 @@ const intlMessages = defineMessages({
     description: 'aria-label used when chat log is empty',
   },
 });
-
-
-
-const sysMessagesIds = {
-  welcomeId: `${SYSTEM_CHAT_TYPE}-welcome-msg`,
-  moderatorId: `${SYSTEM_CHAT_TYPE}-moderator-msg`
- };
-
 class TimeWindowList extends PureComponent {
   constructor(props) {
     super(props);
@@ -60,7 +51,6 @@ class TimeWindowList extends PureComponent {
       fixedWidth: true,
       minHeight: 18,
     });
-    
     this.userScrolledBack = false;
     this.handleScrollUpdate = _.debounce(this.handleScrollUpdate.bind(this), 150);
     this.rowRender = this.rowRender.bind(this);
@@ -84,34 +74,11 @@ class TimeWindowList extends PureComponent {
   }
 
   componentDidMount() {
-    const {
-      scrollPosition,
-    } = this.props;
-    // this.scrollTo(scrollPosition);
-
-    // const { childNodes } = this.messageListWrapper;
-    // this.virualRef = childNodes ? childNodes[0].firstChild : null;
-
-    // if (this.virualRef) {
-    //   this.virualRef.style.direction = document.documentElement.dir;
-    // }
-  
-    // this.scrollInterval = setInterval(() => {
-    //   const {
-    //     scrollArea,
-    //   } = this.state;
-
-    //   if (scrollArea.scrollTop + scrollArea.offsetHeight === scrollArea.scrollHeight) {
-    //     this.setState({
-    //       userScrolledBack: false,
-    //     });
-    //   }
-    // }, 100);
-    
+    // TODO: re-implement scroll to position using virtualized list    
   }
 
   componentDidUpdate(prevProps) {
-    console.log('TimeWindowList::componentDidUpdate', {...this.props}, {...prevProps});
+    ChatLogger.debug('TimeWindowList::componentDidUpdate', {...this.props}, {...prevProps});
     if (this.virualRef) {
       if (this.virualRef.style.direction !== document.documentElement.dir) {
         this.virualRef.style.direction = document.documentElement.dir;
@@ -119,15 +86,12 @@ class TimeWindowList extends PureComponent {
     }
 
     const {
-      scrollPosition,
-      chatId,
       timeWindowsValues,
       userSentMessage,
       setUserSentMessage,
     } = this.props;
 
     const {
-      chatId: prevChatId,
       timeWindowsValues: prevTimeWindowsValues,
     } = prevProps;
 
@@ -170,10 +134,13 @@ class TimeWindowList extends PureComponent {
   }
 
   resizeRow(idx) {
+    // const { timeWindowsValues } = this.props;
+    // const maxSize = timeWindowsValues.length;
+    // for (let index = idx; index < maxSize; index++) {
+    // }
     this.cache.clear(idx);
     if (this.listRef) {
       this.listRef.recomputeRowHeights(idx);
-      //    this.listRef.forceUpdate();
     }
   }
 
@@ -202,7 +169,7 @@ class TimeWindowList extends PureComponent {
     
     const { scrollArea, } = this.state;
     const message = timeWindowsValues[index];
-    console.log('TimeWindowList::rowRender', this.props);
+    ChatLogger.debug('TimeWindowList::rowRender', this.props);
     // it's to get an accurate size of the welcome message because it changes after initial render
     if (message.sender === null && !this.systemMessagesResized[index]) {
       setTimeout(() => this.resizeRow(index), 500);
@@ -221,7 +188,6 @@ class TimeWindowList extends PureComponent {
           style={style}
           key={`span-${key}-${index}`}
         >
-          {/* messages per timewindow: {message.content.length} */}
           <TimeWindowChatItem
             key={key}
             message={message}
@@ -270,36 +236,7 @@ class TimeWindowList extends PureComponent {
       scrollArea,
       userScrolledBack,
     } = this.state;
-    console.log('TimeWindowList::render', {...this.props},  {...this.state}, new Date());
-    // return (
-    //   <div className={styles.messageListWrapper}>
-    //     <div
-    //       role="log"
-    //       // ref={(ref) => { if (ref != null) { this.scrollArea = ref; } }}
-    //       // id={id}
-    //       className={styles.messageList}
-    //       // aria-live="polite"
-    //       // aria-atomic="false"
-    //       // aria-relevant="additions"
-    //       // aria-label={isEmpty ? intl.formatMessage(intlMessages.emptyLogLabel) : ''}
-    //     >
-    //       {timeWindowsValues.map(message => (
-    //         <div key={message.id}>messages per timewindow: {message.content.length}</div>
-    //         <MessageListItem
-    //           handleReadMessage={handleReadMessage}
-    //           key={message.id}
-    //           messages={message.content}
-    //           user={message.sender}
-    //           time={message.time}
-    //           chatAreaId={id}
-    //           lastReadMessageTime={lastReadMessageTime}
-    //           scrollArea={scrollArea}
-    //         />
-    //       ))}
-    //     </div>
-    //     {this.renderUnreadNotification()}
-    //   </div>
-    // );
+    ChatLogger.debug('TimeWindowList::render', {...this.props},  {...this.state}, new Date());
     return (
       [<div 
         onMouseDown={()=> {
@@ -348,8 +285,7 @@ class TimeWindowList extends PureComponent {
                 overscanRowCount={0}
                 deferredMeasurementCache={this.cache}
                 scrollToIndex={
-                  timeWindowsValues.length - 1
-                  // !userScrolledBack ? timeWindowsValues.length - 1 : undefined
+                  !userScrolledBack ? timeWindowsValues.length - 1 : undefined
                 }
               />
             );

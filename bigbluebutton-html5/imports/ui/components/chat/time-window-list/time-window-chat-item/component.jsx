@@ -5,6 +5,7 @@ import _ from 'lodash';
 import Icon from '/imports/ui/components/icon/component';
 import UserAvatar from '/imports/ui/components/user-avatar/component';
 import cx from 'classnames';
+import ChatLogger from '/imports/ui/components/chat/chat-logger/ChatLogger';
 import MessageChatItem from './message-chat-item/component';
 
 import { styles } from './styles';
@@ -47,13 +48,13 @@ const intlMessages = defineMessages({
 
 class TimeWindowChatItem extends PureComponent {
   componentDidUpdate(prevProps, prevState) {
-    console.log('TimeWindowChatItem::componentDidUpdate::props', { ...this.props }, { ...prevProps });
-    console.log('TimeWindowChatItem::componentDidUpdate::state', { ...this.state }, { ...prevState });
+    ChatLogger.debug('TimeWindowChatItem::componentDidUpdate::props', { ...this.props }, { ...prevProps });
+    ChatLogger.debug('TimeWindowChatItem::componentDidUpdate::state', { ...this.state }, { ...prevState });
   }
 
-  componentWillMount(){
-    console.log('TimeWindowChatItem::componentWillMount::props', { ...this.props });
-    console.log('TimeWindowChatItem::componentWillMount::state', { ...this.state });
+  componentWillMount() {
+    ChatLogger.debug('TimeWindowChatItem::componentWillMount::props', { ...this.props });
+    ChatLogger.debug('TimeWindowChatItem::componentWillMount::state', { ...this.state });
   }
 
   renderSystemMessage() {
@@ -107,7 +108,7 @@ class TimeWindowChatItem extends PureComponent {
 
     const dateTime = new Date(time);
     const regEx = /<a[^>]+>/i;
-    console.log('TimeWindowChatItem::renderMessageItem', this.props);
+    ChatLogger.debug('TimeWindowChatItem::renderMessageItem', this.props);
     return (
       <div className={styles.item} key={`time-window-${messageKey}`}>
         <div className={styles.wrapper}>
@@ -227,7 +228,7 @@ class TimeWindowChatItem extends PureComponent {
     const {
       user,
     } = this.props;
-    console.log('TimeWindowChatItem::render', {...this.props});
+    ChatLogger.debug('TimeWindowChatItem::render', {...this.props});
     if (!user) {
       return this.renderSystemMessage();
     }

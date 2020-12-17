@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { withTracker } from 'meteor/react-meteor-data';
 import TimeWindowChatItem from './component';
+import ChatLogger from '/imports/ui/components/chat/chat-logger/ChatLogger';
 import ChatService from '../../service';
 
 const isDefaultPoll = (pollText) => {
@@ -15,8 +16,7 @@ const isDefaultPoll = (pollText) => {
 };
 export default class TimeWindowChatItemContainer extends PureComponent {
   render() {
-    console.log('TimeWindowChatItemContainer::render', { ...this.props });
-    // const { message } = ;
+    ChatLogger.debug('TimeWindowChatItemContainer::render', { ...this.props });
     const messages = this.props.message.content;
 
     const user = this.props.message.sender;

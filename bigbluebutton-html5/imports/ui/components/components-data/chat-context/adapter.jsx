@@ -2,6 +2,7 @@ import React, { useMemo, useContext, useEffect } from 'react';
 import { GroupChatMsg } from '/imports/api/group-chat-msg';
 import { ChatContext, ACTIONS } from './context';
 import { UsersContext } from '../users-context/context';
+import ChatLogger from '/imports/ui/components/chat/chat-logger/ChatLogger';
 
 let usersData = {};
 
@@ -10,7 +11,7 @@ const Adapter = () => {
   const { dispatch } = usingChatContext;
   const usingUsersContext = useContext(UsersContext);
   const { users } = usingUsersContext;
-  console.log('chatAdapter::body::users', users);
+  ChatLogger.trace('chatAdapter::body::users', users);
   useEffect(() => {
     usersData = users;
   }, [usingUsersContext]);
@@ -18,9 +19,11 @@ const Adapter = () => {
   useEffect(() => {
     const alreadyDispatched = new Set();
     const notDispatchedCount = { count: 100 };
+    // TODO: hadle removed Messages
+    // TODO: listen to websocket message to avoid full list comparsion
     const diffAndDispatch = () => {
       setTimeout(() => {
-        const chatCursor = GroupChatMsg.find({}, { reactive: false }).fetch();
+        const chatCursor = GroupChatMsg.find({}, { reactive: false, sort: { timestamp: 1 } }).fetch();
         const notDispatched = chatCursor.filter(objMsg => !alreadyDispatched.has(objMsg._id));
         notDispatchedCount.count = notDispatched.length;
         
@@ -38,37 +41,6 @@ const Adapter = () => {
       }, notDispatchedCount.count >= 10 ? 1000 : 500);
     };
     diffAndDispatch();
-    // chatCursor.observe({
-    //   added: (obj) => {
-    //     console.log('added test 1');
-    //     return;
-    //     dispatch({
-    //       type: ACTIONS.ADDED,
-    //       value: {
-    //         msg: obj,
-    //         senderData: {},
-    //       },
-    //     });
-    //   },
-    //   changed: (obj) => {
-    //     return;
-    //     dispatch({
-    //       type: ACTIONS.CHANGED,
-    //       value: {
-    //         msg: obj,
-    //       },
-    //     });
-    //   },
-    //   removed: (obj) => {
-    //     return;
-    //     dispatch({
-    //       type: ACTIONS.REMOVED,
-    //       value: {
-    //         msg: obj,
-    //       },
-    //     });
-    //   },
-    // });
   }, []);
 
   return null;

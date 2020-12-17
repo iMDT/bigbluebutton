@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import _ from 'lodash';
 import fastdom from 'fastdom';
 import { defineMessages, injectIntl } from 'react-intl';
+import ChatLogger from '/imports/ui/components/chat/chat-logger/ChatLogger';
 
 const propTypes = {
   text: PropTypes.string.isRequired,
@@ -58,8 +59,8 @@ class MessageChatItem extends PureComponent {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    console.log('MessageChatItem::componentDidUpdate::props', { ...this.props }, { ...prevProps });
-    console.log('MessageChatItem::componentDidUpdate::state', { ...this.state }, { ...prevState });
+    ChatLogger.debug('MessageChatItem::componentDidUpdate::props', { ...this.props }, { ...prevProps });
+    ChatLogger.debug('MessageChatItem::componentDidUpdate::state', { ...this.state }, { ...prevState });
     this.listenToUnreadMessages();
   }
 
@@ -69,7 +70,7 @@ class MessageChatItem extends PureComponent {
     // if (!lastReadMessageTime > time) {
     //  return;
     // }
-    console.log('MessageChatItem::componentWillUnmount', this.props);
+    ChatLogger.debug('MessageChatItem::componentWillUnmount', this.props);
     this.removeScrollListeners();
   }
 
@@ -203,7 +204,7 @@ class MessageChatItem extends PureComponent {
       isSystemMessage,
       chatUserMessageItem,
     } = this.props;
-    console.log('MessageChatItem::render', this.props);
+    ChatLogger.debug('MessageChatItem::render', this.props);
     if (type === 'poll') return this.renderPollListItem();
 
     return (

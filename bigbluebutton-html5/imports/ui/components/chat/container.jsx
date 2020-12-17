@@ -6,6 +6,7 @@ import Auth from '/imports/ui/services/auth';
 import Storage from '/imports/ui/services/storage/session';
 import { meetingIsBreakout } from '/imports/ui/components/app/service';
 import { ChatContext, getLoginTime } from '../components-data/chat-context/context';
+import ChatLogger from '/imports/ui/components/chat/chat-logger/ChatLogger';
 import Chat from './component';
 import _ from 'lodash';
 import ChatService from './service';
@@ -43,19 +44,15 @@ const intlMessages = defineMessages({
 });
 
 let lastExecution = 0;
-let bindedFunc = ()=> {};
-const test = ()=> {
+let applyPropsToState = ()=> {};
+
+const applyPropsToStateDebounced = _.debounce(()=> {
   const now = Date.now();
-  console.log('lastExecution', lastExecution, now - lastExecution);
+  ChatLogger.trace('lastExecution', lastExecution, now - lastExecution);
   lastExecution = now;
 
-  bindedFunc();
-}
-
-const throttledFunc = _.debounce(test, 100);
-
-const emptyArray = [];
-const emptyFunc = ()=>{};
+  applyPropsToState();
+}, 100);
 
 const ChatContainer = (props) => {
   useEffect(() => {
@@ -116,7 +113,7 @@ const ChatContainer = (props) => {
   
   let timeWindowsValues = [];
   
-    bindedFunc = ()=> {
+  applyPropsToState = ()=> {
       if (!_.isEqualWith(lastMsg, stateLastMsg) && lastMsg) {
         timeWindowsValues = chatID === PUBLIC_CHAT_KEY
         ? [...Object.values(contextChat.preJoinMessages), ...systemMessagesIds.map((item)=> systemMessages[item]), ...Object.values(contextChat.posJoinMessages)]
@@ -125,7 +122,7 @@ const ChatContainer = (props) => {
         setTimeWindows(timeWindowsValues);
       }
     }
-    throttledFunc();
+  applyPropsToStateDebounced();
   return (
     <Chat {...{ ...props, chatID, amIModerator, count: 1, timeWindowsValues: stateTimeWindows, dispatch: usingChatContext?.dispatch }}>
       {children}

@@ -70,26 +70,6 @@ export default withTracker(() => {
     subscriptionsHandlers.push(Meteor.subscribe('breakouts', currentUser.role, subscriptionErrorHandler));
   }
 
-  let groupChatMessageHandler = {};
-
-  if (CHAT_ENABLED) {
-    const chats = GroupChat.find({
-      $or: [
-        {
-          meetingId,
-          access: PUBLIC_CHAT_TYPE,
-          chatId: { $ne: PUBLIC_GROUP_CHAT_ID },
-        },
-        { meetingId, users: { $all: [requesterUserId] } },
-      ],
-    }).fetch();
-
-    const chatIds = chats.map(chat => chat.chatId);
-
-    groupChatMessageHandler = Meteor.subscribe('group-chat-msg', chatIds, subscriptionErrorHandler);
-    subscriptionsHandlers.push(groupChatMessageHandler);
-  }
-
   const annotationsHandler = Meteor.subscribe('annotations', {
     onReady: () => {
       const activeTextShapeId = AnnotationsTextService.activeTextShapeId();
@@ -108,6 +88,27 @@ export default withTracker(() => {
 
   subscriptionsHandlers = subscriptionsHandlers.filter(obj => obj);
   const ready = subscriptionsHandlers.every(handler => handler.ready());
+  let groupChatMessageHandler = {};
+
+  console.log('not Ready');
+  if (CHAT_ENABLED && ready) {
+    console.log('Ready');
+    const chats = GroupChat.find({
+      $or: [
+        {
+          meetingId,
+          access: PUBLIC_CHAT_TYPE,
+          chatId: { $ne: PUBLIC_GROUP_CHAT_ID },
+        },
+        { meetingId, users: { $all: [requesterUserId] } },
+      ],
+    }).fetch();
+
+    const chatIds = chats.map(chat => chat.chatId);
+    groupChatMessageHandler = Meteor.subscribe('group-chat-msg', chatIds, subscriptionErrorHandler);
+    console.log('groupChatMessageHandler', groupChatMessageHandler);
+    // subscriptionsHandlers.push(groupChatMessageHandler);
+  }
 
   return {
     subscriptionsReady: ready,

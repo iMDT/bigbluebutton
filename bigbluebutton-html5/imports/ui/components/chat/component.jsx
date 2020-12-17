@@ -99,8 +99,6 @@ const Chat = (props) => {
             : <ChatDropdownContainer {...{ meetingIsBreakout, isMeteorConnected, amIModerator }} />
         }
       </header>
-      {/* total:
-      { timeWindowsValues.reduce((acc, i) => acc + i.content.length, 0) } */}
       <TimeWindowList
         id={ELEMENT_ID}
         chatId={chatID}

@@ -7,6 +7,7 @@ import React, {
 
 import Users from '/imports/api/users';
 import Auth from '/imports/ui/services/auth';
+import ChatLogger from '/imports/ui/components/chat/chat-logger/ChatLogger';
 
 const CHAT_CONFIG = Meteor.settings.public.chat;
 const PUBLIC_CHAT_KEY = CHAT_CONFIG.public_id;
@@ -46,18 +47,16 @@ const formatMsg = ({ msg, senderData }, state) => {
     const msgTimewindow = generateTimeWindow(msg.timestamp);
     const key = msg.sender.id + '-' + msgTimewindow;
     const chatIndex = chat?.chatIndexes[key];
-    // const sender = Users.findOne({ userId: message.sender.id }, { fields: { avatar: 1, role: 1 } });
     const {
       _id,
       ...restMsg
     } = msg;
-    // console.log('restMsg', restMsg, senderData);
     const senderInfo = {
-      id: senderData.userId,
+      id: senderData?.userId || msg.sender.id,
       avatar: senderData?.avatar,
-      color: senderData.color,
-      isModerator: senderData?.role === ROLE_MODERATOR,
-      name: senderData.name,
+      color: senderData?.color ,
+      isModerator: senderData?.role === ROLE_MODERATOR, // TODO: get isModerator from message
+      name: senderData?.name || msg.sender.name,
       isOnline: !!senderData,
     };
 
@@ -113,7 +112,7 @@ const formatMsg = ({ msg, senderData }, state) => {
     stateMessages.lastSender = sender;
     stateMessages.chatIndexes[keyName] = newIndex;
     stateMessages.lastTimewindow = keyName + '-' + newIndex;
-    console.log('ChatContext::formatMsg::msgBuilder::tempGroupMessage', tempGroupMessage);
+    ChatLogger.trace('ChatContext::formatMsg::msgBuilder::tempGroupMessage', tempGroupMessage);
     
     const messageGroupsKeys = Object.keys(tempGroupMessage);
     messageGroupsKeys.forEach(key => messageGroups[key] = tempGroupMessage[key]);
@@ -131,7 +130,6 @@ const formatMsg = ({ msg, senderData }, state) => {
             { id: msg.id, text: msg.message, time: msg.timestamp }
           ],
         };
-        // stateMessages.count = (stateMessages.count+1);
       }
     }
   }
@@ -144,14 +142,14 @@ const formatMsg = ({ msg, senderData }, state) => {
 const reducer = (state, action) => {
   switch (action.type) {
     case ACTIONS.TEST: {
-      console.log(ACTIONS.TEST);
+      ChatLogger.info(ACTIONS.TEST);
       return {
         ...state,
         ...action.value,
       };
     }
     case ACTIONS.ADDED: {
-      console.log(ACTIONS.ADDED);
+      ChatLogger.info(ACTIONS.ADDED);
       const newState = formatMsg(action.value, state);
       return {...newState};
     }
@@ -162,14 +160,14 @@ const reducer = (state, action) => {
       };
     }
     case ACTIONS.REMOVED: {
-      console.log(ACTIONS.REMOVED);
+      ChatLogger.info(ACTIONS.REMOVED);
       if (state[msg.chatId]){
         delete state[msg.chatId];
       }
       return state;
     }
     case ACTIONS.USER_STATUS_CHANGED: {
-      console.log(ACTIONS.USER_STATUS_CHANGED);
+      ChatLogger.info(ACTIONS.USER_STATUS_CHANGED);
       const newState = {
         ...state,
       };
@@ -200,7 +198,7 @@ const reducer = (state, action) => {
       return newState
     }
     case ACTIONS.LAST_READ_MESSAGE_TIMESTAMP_CHANGED: {
-      console.log(ACTIONS.LAST_READ_MESSAGE_TIMESTAMP_CHANGED);
+      ChatLogger.info(ACTIONS.LAST_READ_MESSAGE_TIMESTAMP_CHANGED);
       const { timestamp, chatId } = action.value;
       const newState = {
         ...state,
@@ -247,7 +245,7 @@ const reducer = (state, action) => {
 
 export const ChatContextProvider = (props) => {
   const [chatContextState, chatContextDispatch] = useReducer(reducer, {});
-  console.log('dispatch', chatContextDispatch);
+  ChatLogger.debug('dispatch', chatContextDispatch);
   return (
     <ChatContext.Provider value={
       {
