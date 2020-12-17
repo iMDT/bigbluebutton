@@ -21,7 +21,9 @@ import getFromUserSettings from '/imports/ui/services/users-settings';
 import LayoutManager from '/imports/ui/components/layout/layout-manager';
 import { withLayoutContext } from '/imports/ui/components/layout/context';
 import VideoService from '/imports/ui/components/video-provider/service';
+import ContextProviders from '/imports/ui/components/context-providers/component';
 import DebugWindow from '/imports/ui/components/debug-window/component'
+import ChatLogger from '/imports/ui/components/chat/chat-logger/ChatLogger';
 import {Meteor} from "meteor/meteor";
 
 const CHAT_CONFIG = Meteor.settings.public.chat;
@@ -219,7 +221,9 @@ class Base extends Component {
       return (<MeetingEnded code={codeError} />);
     }
 
-    return (<AppContainer {...this.props} baseControls={stateControls} />);
+    return (
+        <AppContainer {...this.props} baseControls={stateControls} />
+    );
   }
 
   render() {
@@ -230,6 +234,7 @@ class Base extends Component {
 
     return (
       <Fragment>
+        <LayoutManager />
         {meetingExist && Auth.loggedIn && <DebugWindow />}
         {meetingExist && Auth.loggedIn && <LayoutManager />}
         {

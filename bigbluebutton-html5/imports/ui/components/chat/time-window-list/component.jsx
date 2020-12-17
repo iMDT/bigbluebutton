@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import { findDOMNode } from 'react-dom';
 import PropTypes from 'prop-types';
 import { defineMessages, injectIntl } from 'react-intl';
@@ -8,10 +8,15 @@ import {
   List, AutoSizer, CellMeasurer, CellMeasurerCache,
 } from 'react-virtualized';
 import { styles } from './styles';
-import MessageListItemContainer from './message-list-item/container';
+import ChatLogger from '/imports/ui/components/chat/chat-logger/ChatLogger';
+import TimeWindowChatItem from './time-window-chat-item/container';
+
+window.test = CellMeasurer;
+
+
+const CHAT_CONFIG = Meteor.settings.public.chat;
 
 const propTypes = {
-  messages: PropTypes.arrayOf(PropTypes.object).isRequired,
   scrollPosition: PropTypes.number,
   chatId: PropTypes.string.isRequired,
   hasUnreadMessages: PropTypes.bool.isRequired,
@@ -39,15 +44,13 @@ const intlMessages = defineMessages({
     description: 'aria-label used when chat log is empty',
   },
 });
-
-class MessageList extends Component {
+class TimeWindowList extends PureComponent {
   constructor(props) {
     super(props);
     this.cache = new CellMeasurerCache({
       fixedWidth: true,
       minHeight: 18,
     });
-    
     this.userScrolledBack = false;
     this.handleScrollUpdate = _.debounce(this.handleScrollUpdate.bind(this), 150);
     this.rowRender = this.rowRender.bind(this);
@@ -59,6 +62,7 @@ class MessageList extends Component {
       shouldScrollToPosition: false,
       scrollPosition: 0,
       userScrolledBack: false,
+      lastMessage: {},
     };
 
     this.listRef = null;
@@ -70,33 +74,11 @@ class MessageList extends Component {
   }
 
   componentDidMount() {
-    const {
-      scrollPosition,
-    } = this.props;
-    this.scrollTo(scrollPosition);
-
-    const { childNodes } = this.messageListWrapper;
-    this.virualRef = childNodes ? childNodes[0].firstChild : null;
-
-    if (this.virualRef) {
-      this.virualRef.style.direction = document.documentElement.dir;
-    }
-  
-    this.scrollInterval = setInterval(() => {
-      const {
-        scrollArea,
-      } = this.state;
-
-      if (scrollArea.scrollTop + scrollArea.offsetHeight === scrollArea.scrollHeight) {
-        this.setState({
-          userScrolledBack: false,
-        });
-      }
-    }, 100);
-
+    // TODO: re-implement scroll to position using virtualized list    
   }
 
   componentDidUpdate(prevProps) {
+    ChatLogger.debug('TimeWindowList::componentDidUpdate', {...this.props}, {...prevProps});
     if (this.virualRef) {
       if (this.virualRef.style.direction !== document.documentElement.dir) {
         this.virualRef.style.direction = document.documentElement.dir;
@@ -104,37 +86,31 @@ class MessageList extends Component {
     }
 
     const {
-      scrollPosition,
-      chatId,
-      messages,
+      timeWindowsValues,
+      userSentMessage,
+      setUserSentMessage,
     } = this.props;
+
     const {
-      scrollPosition: prevScrollPosition,
-      messages: prevMessages,
-      chatId: prevChatId,
+      timeWindowsValues: prevTimeWindowsValues,
     } = prevProps;
 
-    if (prevChatId !== chatId) {
-      this.cache.clearAll();
-      setTimeout(() => this.scrollTo(scrollPosition), 300);
-    } else if (prevMessages && messages) {
-      if (prevMessages.length > messages.length) {
-        // the chat has been cleared
-        this.cache.clearAll();
-      } else {
-        prevMessages.forEach((prevMessage, index) => {
-          const newMessage = messages[index];
-          if (newMessage.content.length > prevMessage.content.length
-              || newMessage.id !== prevMessage.id) {
-            this.resizeRow(index);
-          }
-        });
-      }
+    const {
+      lastMessage: stateLastMsg,
+    } = this.state;
+
+    const lastMsg = timeWindowsValues[timeWindowsValues.length - 1];
+    const prevLastMsg = prevTimeWindowsValues[prevTimeWindowsValues.length - 1];
+
+    if (lastMsg?.content?.length > prevLastMsg?.content?.length
+      || lastMsg?.id !== stateLastMsg?.id) {
+      this.resizeRow(timeWindowsValues.length-1);
     }
 
-    if (prevMessages.length < messages.length) {
-      // this.resizeRow(prevMessages.length - 1);
-      // messages.forEach((i, idx) => this.resizeRow(idx));
+    if (userSentMessage && !prevProps.userSentMessage){
+      this.setState({
+        userScrolledBack: false,
+      }, ()=> setUserSentMessage(false));
     }
   }
 
@@ -158,10 +134,13 @@ class MessageList extends Component {
   }
 
   resizeRow(idx) {
+    // const { timeWindowsValues } = this.props;
+    // const maxSize = timeWindowsValues.length;
+    // for (let index = idx; index < maxSize; index++) {
+    // }
     this.cache.clear(idx);
     if (this.listRef) {
       this.listRef.recomputeRowHeights(idx);
-      //    this.listRef.forceUpdate();
     }
   }
 
@@ -181,16 +160,17 @@ class MessageList extends Component {
     key,
   }) {
     const {
-      messages,
-      handleReadMessage,
       lastReadMessageTime,
       id,
+      timeWindowsValues,
+      dispatch,
+      chatId,
     } = this.props;
-    const { scrollArea } = this.state;
-    const message = messages[index];
-
+    
+    const { scrollArea, } = this.state;
+    const message = timeWindowsValues[index];
+    ChatLogger.debug('TimeWindowList::rowRender', this.props);
     // it's to get an accurate size of the welcome message because it changes after initial render
-
     if (message.sender === null && !this.systemMessagesResized[index]) {
       setTimeout(() => this.resizeRow(index), 500);
       this.systemMessagesResized[index] = true;
@@ -206,17 +186,16 @@ class MessageList extends Component {
       >
         <span
           style={style}
-          key={key}
+          key={`span-${key}-${index}`}
         >
-          <MessageListItemContainer
-            style={style}
-            handleReadMessage={handleReadMessage}
+          <TimeWindowChatItem
             key={key}
             message={message}
             messageId={message.id}
             chatAreaId={id}
-            lastReadMessageTime={lastReadMessageTime}
             scrollArea={scrollArea}
+            dispatch={dispatch}
+            chatId={chatId}
           />
         </span>
       </CellMeasurer>
@@ -226,12 +205,11 @@ class MessageList extends Component {
   renderUnreadNotification() {
     const {
       intl,
-      hasUnreadMessages,
-      scrollPosition,
+      count,
     } = this.props;
     const { userScrolledBack } = this.state;
 
-    if (hasUnreadMessages && userScrolledBack) {
+    if (count && userScrolledBack) {
       return (
         <Button
           aria-hidden="true"
@@ -252,13 +230,13 @@ class MessageList extends Component {
 
   render() {
     const {
-      messages,
+      timeWindowsValues,
     } = this.props;
     const {
       scrollArea,
       userScrolledBack,
     } = this.state;
- 
+    ChatLogger.debug('TimeWindowList::render', {...this.props},  {...this.state}, new Date());
     return (
       [<div 
         onMouseDown={()=> {
@@ -267,7 +245,6 @@ class MessageList extends Component {
           });
         }}
         onWheel={(e) => {
-          console.log('caiu aqui');
           if (e.deltaY < 0) {
             this.setState({
               userScrolledBack: true,
@@ -286,7 +263,7 @@ class MessageList extends Component {
               this.lastWidth = width;
               this.cache.clearAll();
             }
-
+            
             return (
               <List
                 ref={(ref) => {
@@ -302,12 +279,14 @@ class MessageList extends Component {
                 rowHeight={this.cache.rowHeight}
                 className={styles.messageList}
                 rowRenderer={this.rowRender}
-                rowCount={messages.length}
+                rowCount={timeWindowsValues.length}
                 height={height}
                 width={width}
-                overscanRowCount={5}
+                overscanRowCount={0}
                 deferredMeasurementCache={this.cache}
-                scrollToIndex={!userScrolledBack ? messages.length - 1 : undefined}
+                scrollToIndex={
+                  !userScrolledBack ? timeWindowsValues.length - 1 : undefined
+                }
               />
             );
           }}
@@ -318,7 +297,7 @@ class MessageList extends Component {
   }
 }
 
-MessageList.propTypes = propTypes;
-MessageList.defaultProps = defaultProps;
+TimeWindowList.propTypes = propTypes;
+TimeWindowList.defaultProps = defaultProps;
 
-export default injectIntl(MessageList);
+export default injectIntl(TimeWindowList);

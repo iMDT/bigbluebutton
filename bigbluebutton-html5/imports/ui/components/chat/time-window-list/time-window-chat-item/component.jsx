@@ -1,11 +1,12 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import { FormattedTime, defineMessages, injectIntl } from 'react-intl';
 import _ from 'lodash';
 import Icon from '/imports/ui/components/icon/component';
 import UserAvatar from '/imports/ui/components/user-avatar/component';
 import cx from 'classnames';
-import Message from './message/component';
+import ChatLogger from '/imports/ui/components/chat/chat-logger/ChatLogger';
+import MessageChatItem from './message-chat-item/component';
 
 import { styles } from './styles';
 
@@ -45,30 +46,15 @@ const intlMessages = defineMessages({
   },
 });
 
-class MessageListItem extends Component {
-  shouldComponentUpdate(nextProps) {
-    const {
-      scrollArea,
-      messages,
-      user,
-      messageId,
-    } = this.props;
+class TimeWindowChatItem extends PureComponent {
+  componentDidUpdate(prevProps, prevState) {
+    ChatLogger.debug('TimeWindowChatItem::componentDidUpdate::props', { ...this.props }, { ...prevProps });
+    ChatLogger.debug('TimeWindowChatItem::componentDidUpdate::state', { ...this.state }, { ...prevState });
+  }
 
-    const {
-      scrollArea: nextScrollArea,
-      messages: nextMessages,
-      user: nextUser,
-      messageId: nextMessageId,
-    } = nextProps;
-
-    if (!scrollArea && nextScrollArea) return true;
-
-    const hasNewMessage = messages.length !== nextMessages.length;
-    const hasIdChanged = messageId !== nextMessageId;
-    const hasUserChanged = user && nextUser
-      && (user.isModerator !== nextUser.isModerator || user.isOnline !== nextUser.isOnline);
-
-    return hasNewMessage || hasIdChanged || hasUserChanged;
+  componentWillMount() {
+    ChatLogger.debug('TimeWindowChatItem::componentWillMount::props', { ...this.props });
+    ChatLogger.debug('TimeWindowChatItem::componentWillMount::state', { ...this.state });
   }
 
   renderSystemMessage() {
@@ -76,15 +62,16 @@ class MessageListItem extends Component {
       messages,
       chatAreaId,
       handleReadMessage,
+      messageKey
     } = this.props;
 
     return (
-      <div className={styles.item}>
+      <div className={styles.item} key={`time-window-chat-item-${messageKey}`}>
         <div className={styles.messages}>
           {messages.map(message => (
             message.text !== ''
               ? (
-                <Message
+                <MessageChatItem
                   className={(message.id ? styles.systemMessage : styles.systemMessageNoBorder)}
                   key={message.id ? message.id : _.uniqueId('id-')}
                   text={message.text}
@@ -105,11 +92,13 @@ class MessageListItem extends Component {
       user,
       time,
       chatAreaId,
-      lastReadMessageTime,
-      handleReadMessage,
       scrollArea,
       intl,
       messages,
+      messageKey,
+      dispatch,
+      chatId,
+      read,
       chatUserMessageItem,
     } = this.props;
 
@@ -119,9 +108,9 @@ class MessageListItem extends Component {
 
     const dateTime = new Date(time);
     const regEx = /<a[^>]+>/i;
-
+    ChatLogger.debug('TimeWindowChatItem::renderMessageItem', this.props);
     return (
-      <div className={styles.item} key={_.uniqueId('message-list-item-')}>
+      <div className={styles.item} key={`time-window-${messageKey}`}>
         <div className={styles.wrapper}>
           <div className={styles.avatarWrapper}>
             <UserAvatar
@@ -151,15 +140,25 @@ class MessageListItem extends Component {
             </div>
             <div className={styles.messages}>
               {messages.map(message => (
-                <Message
+                <MessageChatItem
                   className={(regEx.test(message.text) ? styles.hyperlink : styles.message)}
                   key={message.id}
                   text={message.text}
                   time={message.time}
                   chatAreaId={chatAreaId}
-                  chatUserMessageItem={true}
-                  lastReadMessageTime={lastReadMessageTime}
-                  handleReadMessage={handleReadMessage}
+                  dispatch={dispatch}
+                  read={message.read}
+                  handleReadMessage={(timestamp) => {
+                    if (!read) {
+                      dispatch({
+                        type: 'last_read_message_timestamp_changed',
+                        value: {
+                          chatId,
+                          timestamp,
+                        },
+                      });
+                    }
+                  }}
                   scrollArea={scrollArea}
                 />
               ))}
@@ -206,7 +205,7 @@ class MessageListItem extends Component {
                 <FormattedTime value={dateTime} />
               </time>
             </div>
-            <Message
+            <MessageChatItem
               type="poll"
               className={cx(styles.message, styles.pollWrapper)}
               key={messages[0].id}
@@ -229,7 +228,7 @@ class MessageListItem extends Component {
     const {
       user,
     } = this.props;
-
+    ChatLogger.debug('TimeWindowChatItem::render', {...this.props});
     if (!user) {
       return this.renderSystemMessage();
     }
@@ -242,7 +241,7 @@ class MessageListItem extends Component {
   }
 }
 
-MessageListItem.propTypes = propTypes;
-MessageListItem.defaultProps = defaultProps;
+TimeWindowChatItem.propTypes = propTypes;
+TimeWindowChatItem.defaultProps = defaultProps;
 
-export default injectIntl(MessageListItem);
+export default injectIntl(TimeWindowChatItem);

@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import _ from 'lodash';
 import fastdom from 'fastdom';
 import { defineMessages, injectIntl } from 'react-intl';
+import ChatLogger from '/imports/ui/components/chat/chat-logger/ChatLogger';
 
 const propTypes = {
   text: PropTypes.string.isRequired,
@@ -42,7 +43,7 @@ const intlMessages = defineMessages({
   },
 });
 
-class MessageListItem extends PureComponent {
+class MessageChatItem extends PureComponent {
   constructor(props) {
     super(props);
 
@@ -57,7 +58,9 @@ class MessageListItem extends PureComponent {
     this.listenToUnreadMessages();
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps, prevState) {
+    ChatLogger.debug('MessageChatItem::componentDidUpdate::props', { ...this.props }, { ...prevProps });
+    ChatLogger.debug('MessageChatItem::componentDidUpdate::state', { ...this.state }, { ...prevState });
     this.listenToUnreadMessages();
   }
 
@@ -67,7 +70,7 @@ class MessageListItem extends PureComponent {
     // if (!lastReadMessageTime > time) {
     //  return;
     // }
-
+    ChatLogger.debug('MessageChatItem::componentWillUnmount', this.props);
     this.removeScrollListeners();
   }
 
@@ -84,21 +87,22 @@ class MessageListItem extends PureComponent {
   }
 
   handleMessageInViewport() {
+    
     if (!this.ticking) {
       fastdom.measure(() => {
         const node = this.text;
         const {
           handleReadMessage,
           time,
-          lastReadMessageTime,
+          read,
         } = this.props;
 
-        if (lastReadMessageTime > time) {
+        if (read) {
           this.removeScrollListeners();
           return;
         }
 
-        if (isElementInViewport(node)) {
+        if (isElementInViewport(node) && !read) {
           handleReadMessage(time);
           this.removeScrollListeners();
         }
@@ -113,9 +117,10 @@ class MessageListItem extends PureComponent {
   removeScrollListeners() {
     const {
       scrollArea,
+      read,
     } = this.props;
 
-    if (scrollArea) {
+    if (scrollArea && !read) {
       eventsToBeBound.forEach(
         e => scrollArea.removeEventListener(e, this.handleMessageInViewport),
       );
@@ -128,10 +133,10 @@ class MessageListItem extends PureComponent {
     const {
       handleReadMessage,
       time,
-      lastReadMessageTime,
+      read,
     } = this.props;
 
-    if (lastReadMessageTime > time) {
+    if (read) {
       return;
     }
 
@@ -139,11 +144,11 @@ class MessageListItem extends PureComponent {
 
     fastdom.measure(() => {
       const {
-        lastReadMessageTime: updatedLastReadMessageTime,
+        read: newRead,
       } = this.props;
       // this function is called after so we need to get the updated lastReadMessageTime
 
-      if (updatedLastReadMessageTime > time) {
+      if (newRead) {
         return;
       }
 
@@ -199,7 +204,7 @@ class MessageListItem extends PureComponent {
       isSystemMessage,
       chatUserMessageItem,
     } = this.props;
-
+    ChatLogger.debug('MessageChatItem::render', this.props);
     if (type === 'poll') return this.renderPollListItem();
 
     return (
@@ -213,7 +218,7 @@ class MessageListItem extends PureComponent {
   }
 }
 
-MessageListItem.propTypes = propTypes;
-MessageListItem.defaultProps = defaultProps;
+MessageChatItem.propTypes = propTypes;
+MessageChatItem.defaultProps = defaultProps;
 
-export default injectIntl(MessageListItem);
+export default injectIntl(MessageChatItem);
