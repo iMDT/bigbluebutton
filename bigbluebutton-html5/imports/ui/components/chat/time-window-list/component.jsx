@@ -5,13 +5,15 @@ import { defineMessages, injectIntl } from 'react-intl';
 import _ from 'lodash';
 import Button from '/imports/ui/components/button/component';
 import {
-  List, AutoSizer, CellMeasurer, CellMeasurerCache,
+  List, AutoSizer, 
+  // CellMeasurer, CellMeasurerCache
 } from 'react-virtualized';
 import { styles } from './styles';
 import ChatLogger from '/imports/ui/components/chat/chat-logger/ChatLogger';
 import TimeWindowChatItem from './time-window-chat-item/container';
 
-window.test = CellMeasurer;
+import CellMeasurer from '/imports/ui/components/chat/cell-measurer-shim/cellMeasurer';
+import CellMeasurerCache from '/imports/ui/components/chat/cell-measurer-shim/cellMeasurerCache';
 
 
 const CHAT_CONFIG = Meteor.settings.public.chat;
